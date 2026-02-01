@@ -1,0 +1,15 @@
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.playwright-mcp/
+
+# Node
+node_modules/
+package.json
+package-lock.json

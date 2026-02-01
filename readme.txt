@@ -4,7 +4,7 @@ Tags: related posts, ai, seo, openai, gpt, similarity, cache, analytics
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,12 @@ API使用状況を完全に可視化できます：
 
 == Changelog ==
 
+= 1.0.1 =
+**バグ修正**
+
+* メタボックスのHTML構造を修正
+* 他プラグインのメタボックス開閉が正常に動作しない問題を解消
+
 = 1.0.0 =
 **初回リリース - エンタープライズ級関連記事管理システム**
 
@@ -193,6 +199,9 @@ API使用状況を完全に可視化できます：
 * キャッシュ状況の可視化
 
 == Upgrade Notice ==
+
+= 1.0.1 =
+メタボックスのHTML構造を修正。他プラグインのメタボックス開閉に干渉する問題を解消しました。
 
 = 1.0.0 =
 初回リリース。3階層設定・API統計・一括操作・詳細キャッシュ管理で大規模サイトの関連記事を効率的に運用。

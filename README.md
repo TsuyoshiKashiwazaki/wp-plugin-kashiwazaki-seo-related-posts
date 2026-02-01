@@ -3,7 +3,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.0--dev-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-related-posts/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.1-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-related-posts/releases)
 
 AI分析・3階層設定・API統計・一括操作で大規模サイトの関連記事を効率管理。OpenAI GPT対応、投稿タイプ別キャッシュ管理、詳細な個別記事設定が可能なエンタープライズ級SEOプラグイン。
 
@@ -83,6 +83,9 @@ AI分析・3階層設定・API統計・一括操作で大規模サイトの関�
 - **AI API**: OpenAI GPT（APIキー必要）
 
 ## 更新履歴
+
+### Version 1.0.1 - 2026-02-01
+メタボックスのHTML構造を修正。他プラグインのメタボックス開閉が正常に動作するよう改善。
 
 ### Version 1.0.0 - 2025-10-30
 初回リリース。3階層設定システム・API統計ダッシュボード・一括操作機能・詳細キャッシュ管理を実装。

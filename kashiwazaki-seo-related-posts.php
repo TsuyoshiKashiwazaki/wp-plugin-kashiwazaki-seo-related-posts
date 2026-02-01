@@ -3,14 +3,14 @@
 Plugin Name: Kashiwazaki SEO Related Posts
 Plugin URI: https://www.tsuyoshikashiwazaki.jp
 Description: AI分析・3階層設定・API統計・一括操作で大規模サイトの関連記事を効率管理。OpenAI GPT対応、投稿タイプ別キャッシュ管理、詳細な個別記事設定が可能なエンタープライズ級SEOプラグイン
-Version: 1.0.0
+Version: 1.0.1
 Author: 柏崎剛 (Tsuyoshi Kashiwazaki)
 Author URI: https://www.tsuyoshikashiwazaki.jp/profile/
 */
 
 if (!defined('ABSPATH')) exit;
 
-define('KASHIWAZAKI_SEO_RELATED_POSTS_VERSION', '1.0.0');
+define('KASHIWAZAKI_SEO_RELATED_POSTS_VERSION', '1.0.1');
 define('KASHIWAZAKI_SEO_RELATED_POSTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('KASHIWAZAKI_SEO_RELATED_POSTS_PLUGIN_URL', plugin_dir_url(__FILE__));
 

@@ -2409,6 +2409,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                             </p>
                         <?php endif; ?>
                     </div>
+                </div><!-- #kashiwazaki-related-posts-preview -->
                 </div><!-- 関連記事の生成セクション終了 -->
             </div><!-- kashiwazaki-related-posts-detailed-settings -->
         </div><!-- kashiwazaki-related-posts-settings -->
