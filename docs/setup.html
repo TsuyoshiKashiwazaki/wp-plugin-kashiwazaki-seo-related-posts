@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インストール・初期設定 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.1</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li><a href="index.html">概要</a></li>
+        <li class="active"><a href="setup.html">インストール・初期設定</a></li>
+        <li><a href="related-settings.html">詳細設定</a></li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>インストール・初期設定</h1>
+    <p class="lead">Kashiwazaki SEO Related Posts のインストール方法と、AI関連記事機能に必要な基本設定を説明します。</p>
+
+    <h2>インストール手順</h2>
+
+    <div class="step">
+        <span class="step-number">1</span>
+        <div class="step-body">
+            <p>WordPress管理画面から <strong>プラグイン &gt; 新規追加</strong> に移動し、「Kashiwazaki SEO Related Posts」を検索します。または、プラグインのZIPファイルを <strong>プラグイン &gt; 新規追加 &gt; プラグインのアップロード</strong> からアップロードします。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">2</span>
+        <div class="step-body">
+            <p>「今すぐインストール」をクリックし、インストール完了後「有効化」をクリックします。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">3</span>
+        <div class="step-body">
+            <p>管理画面の左メニューに「Kashiwazaki SEO Related Posts」が追加されます。クリックして設定画面を開きます。</p>
+        </div>
+    </div>
+
+    <figure class="screenshot">
+        <img src="images/screenshots/00-menu-location.png" alt="管理画面メニューの位置" class="lightbox-trigger">
+        <figcaption>管理画面の左メニューにプラグインが追加されます</figcaption>
+    </figure>
+
+    <h2>OpenAI APIキーの設定</h2>
+
+    <p>AI関連記事機能を使用するには、OpenAI APIキーの設定が必要です。</p>
+
+    <div class="step">
+        <span class="step-number">1</span>
+        <div class="step-body">
+            <p><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI Platform</a> にアクセスし、APIキーを生成します。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">2</span>
+        <div class="step-body">
+            <p>設定画面の「OpenAI API設定」セクションで、生成したAPIキーを入力します。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">3</span>
+        <div class="step-body">
+            <p>「設定を保存」ボタンをクリックして変更を適用します。</p>
+        </div>
+    </div>
+
+    <div class="callout callout-warning">
+        <div class="callout-title">注意</div>
+        <p>OpenAI APIの利用には料金が発生します。APIキーの管理には十分注意し、使用量の上限を設定することを推奨します。APIキーはサーバー側で安全に保管されます。</p>
+    </div>
+
+    <h2>基本設定</h2>
+
+    <h3>表示形式</h3>
+    <p>関連記事の表示形式を3種類から選択できます。</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">表示形式</th>
+                <th>説明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>リスト</td>
+                <td>縦一列のリスト形式。サムネイル・タイトル・抜粋を表示します。シンプルで可読性が高いです。</td>
+            </tr>
+            <tr>
+                <td>グリッド</td>
+                <td>カード形式のグリッドレイアウト。サムネイルが大きく表示され、視覚的なインパクトがあります。</td>
+            </tr>
+            <tr>
+                <td>スライダー</td>
+                <td>左右にスワイプ可能なスライダー形式。省スペースで多くの関連記事を表示できます。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>カラーテーマ</h3>
+    <p>関連記事セクションのカラーテーマを6色から選択できます。サイトのデザインに合わせて最適な色を選んでください。</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">テーマ</th>
+                <th>説明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>ブルー</td>
+                <td>信頼感のあるブルー系カラー。ビジネスサイトやメディアサイトに最適です。</td>
+            </tr>
+            <tr>
+                <td>グリーン</td>
+                <td>ナチュラルなグリーン系カラー。健康・環境関連サイトにおすすめです。</td>
+            </tr>
+            <tr>
+                <td>レッド</td>
+                <td>目を引くレッド系カラー。アクション性の高いサイトに適しています。</td>
+            </tr>
+            <tr>
+                <td>パープル</td>
+                <td>高級感のあるパープル系カラー。クリエイティブなサイトに調和します。</td>
+            </tr>
+            <tr>
+                <td>オレンジ</td>
+                <td>エネルギッシュなオレンジ系カラー。ポジティブな印象を与えます。</td>
+            </tr>
+            <tr>
+                <td>グレー</td>
+                <td>落ち着いたグレー系カラー。どんなテーマにも馴染むニュートラルな色です。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>表示件数</h3>
+    <p>関連記事の表示件数を設定します。デフォルトは5件です。コンテンツの量やサイトの目的に応じて調整してください。</p>
+
+    <div class="callout callout-tip">
+        <div class="callout-title">ヒント</div>
+        <p>表示件数が多すぎるとページの読み込み時間に影響します。3〜8件程度を推奨します。</p>
+    </div>
+
+    <h2>AI類似度分析の仕組み</h2>
+
+    <p>本プラグインのAI関連記事機能は以下の流れで動作します。</p>
+
+    <div class="step">
+        <span class="step-number">1</span>
+        <div class="step-body">
+            <p>投稿のタイトル・本文・カテゴリなどの情報をOpenAI GPTに送信します。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">2</span>
+        <div class="step-body">
+            <p>GPTが記事間の意味的な類似度をスコアリングし、関連度の高い記事を特定します。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">3</span>
+        <div class="step-body">
+            <p>分析結果はTransientキャッシュに保存され、次回以降のアクセスではキャッシュからデータを返します。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">4</span>
+        <div class="step-body">
+            <p>フロントエンドで設定に基づいた表示形式・カラーテーマで関連記事を表示します。</p>
+        </div>
+    </div>
+
+    <div class="callout callout-note">
+        <div class="callout-title">補足</div>
+        <p>AI分析の結果はキャッシュされるため、APIの呼び出しは初回および キャッシュ有効期限切れ時のみ発生します。通常のページ表示ではAPIコストは発生しません。</p>
+    </div>
+
+    <nav class="page-nav">
+        <a href="index.html" class="prev">&laquo; 概要</a>
+        <a href="related-settings.html" class="next">詳細設定 &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.1</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

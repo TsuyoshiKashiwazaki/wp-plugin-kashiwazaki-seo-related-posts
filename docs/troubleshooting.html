@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>トラブルシューティング - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.1</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="setup.html">インストール・初期設定</a></li>
+        <li><a href="related-settings.html">詳細設定</a></li>
+        <li class="active"><a href="troubleshooting.html">トラブルシューティング</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>トラブルシューティング</h1>
+    <p class="lead">Kashiwazaki SEO Related Posts の使用中に発生しうる問題と対処法、動作要件、技術仕様について解説します。</p>
+
+    <h2>よくある問題と対処法</h2>
+
+    <h3>関連記事が表示されない</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">考えられる原因</th>
+                <th>対処法</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>プラグインが有効化されていない</td>
+                <td>管理画面の「プラグイン」一覧で、本プラグインが有効になっていることを確認してください。</td>
+            </tr>
+            <tr>
+                <td>OpenAI APIキーが未設定</td>
+                <td>設定画面でOpenAI APIキーが正しく入力されているか確認してください。</td>
+            </tr>
+            <tr>
+                <td>AI分析がまだ実行されていない</td>
+                <td>投稿に対するAI類似度分析が未実行の場合、関連記事は表示されません。設定画面から分析を実行してください。</td>
+            </tr>
+            <tr>
+                <td>投稿個別設定で非表示になっている</td>
+                <td>投稿編集画面のメタボックスで「関連記事を非表示」が有効になっていないか確認してください。</td>
+            </tr>
+            <tr>
+                <td>キャッシュプラグインが古い出力を表示している</td>
+                <td>キャッシュプラグインのキャッシュをクリアしてください。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>OpenAI APIエラーが発生する</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">考えられる原因</th>
+                <th>対処法</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>APIキーが無効または期限切れ</td>
+                <td><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI Platform</a> でAPIキーのステータスを確認してください。</td>
+            </tr>
+            <tr>
+                <td>APIの利用上限に達している</td>
+                <td>OpenAIアカウントの利用上限を確認してください。必要に応じて上限を引き上げてください。</td>
+            </tr>
+            <tr>
+                <td>サーバーの外部通信が制限されている</td>
+                <td>ホスティング環境で <code>wp_remote_post</code> による外部HTTPリクエストが許可されているか確認してください。</td>
+            </tr>
+            <tr>
+                <td>OpenAIサービスが一時的にダウンしている</td>
+                <td><a href="https://status.openai.com/" target="_blank" rel="noopener">OpenAI Status</a> でサービス状況を確認し、復旧後に再試行してください。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>関連記事のスタイルが崩れる</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">考えられる原因</th>
+                <th>対処法</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>テーマのCSSとの競合</td>
+                <td>ブラウザの開発者ツールで、テーマのCSSが関連記事のスタイルを上書きしていないか確認してください。</td>
+            </tr>
+            <tr>
+                <td>他のプラグインのCSS/JSとの競合</td>
+                <td>他のプラグインを一時的に無効にして、競合の原因を特定してください。</td>
+            </tr>
+            <tr>
+                <td>スライダーが正しく動作しない</td>
+                <td>JavaScriptエラーがないか確認してください。jQueryの競合が原因の場合があります。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>AI分析の結果が不適切</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">考えられる原因</th>
+                <th>対処法</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>投稿数が少なすぎる</td>
+                <td>関連記事の精度は投稿数に依存します。十分な数の投稿がサイトに存在することを確認してください。</td>
+            </tr>
+            <tr>
+                <td>キャッシュが古い</td>
+                <td>設定画面の「キャッシュクリア」ボタンでキャッシュを削除し、AI分析を再実行してください。</td>
+            </tr>
+            <tr>
+                <td>特定の投稿で不適切な結果</td>
+                <td>投稿個別設定のメタボックスから、手動で関連記事を選択してAI提案を上書きしてください。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-tip">
+        <div class="callout-title">ヒント</div>
+        <p>問題が解決しない場合は、一度プラグインを無効化してから再有効化してみてください。設定値はデータベースに保持されるため、再有効化後も設定は維持されます。</p>
+    </div>
+
+    <h2>動作要件</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">項目</th>
+                <th>要件</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>WordPress</td>
+                <td>5.0 以上</td>
+            </tr>
+            <tr>
+                <td>PHP</td>
+                <td>7.4 以上</td>
+            </tr>
+            <tr>
+                <td>OpenAI APIキー</td>
+                <td>AI関連記事機能を使用する場合は必須</td>
+            </tr>
+            <tr>
+                <td>対応ブラウザ</td>
+                <td>Chrome、Firefox、Safari、Edge（最新版）</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>技術仕様</h2>
+
+    <ul>
+        <li><strong>データ保存:</strong> wp_options (kashiwazaki_seo_related_posts_options), post_meta, transient cache</li>
+        <li><strong>カスタムテーブル:</strong> なし</li>
+        <li><strong>外部通信:</strong> OpenAI API (wp_remote_post)</li>
+        <li><strong>Cronイベント:</strong> なし</li>
+        <li><strong>メール送信:</strong> なし</li>
+        <li><strong>フロントエンド:</strong> CSS 24KB、JS 7.4KB</li>
+    </ul>
+
+    <h2>アーキテクチャ</h2>
+
+    <p>Kashiwazaki SEO Related Posts は以下のコンポーネントで構成されています。</p>
+
+    <h3>フロントエンド</h3>
+    <ul>
+        <li>CSS（24KB）でリスト・グリッド・スライダーの3表示形式と6カラーテーマを実装</li>
+        <li>JavaScript（7.4KB）でスライダー動作とAJAX処理を実行</li>
+        <li>JSON-LDの出力は行わない</li>
+    </ul>
+
+    <h3>バックエンド</h3>
+    <ul>
+        <li>グローバル設定は <code>wp_options</code> テーブルに <code>kashiwazaki_seo_related_posts_options</code> キーで保存</li>
+        <li>投稿個別の関連記事データは <code>post_meta</code> に保存</li>
+        <li>AI分析結果は Transient API でキャッシュ</li>
+        <li>OpenAI APIとの通信は <code>wp_remote_post</code> で実行</li>
+        <li>6つのAJAXハンドラーで管理画面の非同期操作を実現</li>
+    </ul>
+
+    <h3>AI分析フロー</h3>
+
+    <div class="step">
+        <span class="step-number">1</span>
+        <div class="step-body">
+            <p>管理画面またはAJAXリクエストからAI分析が開始されます。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">2</span>
+        <div class="step-body">
+            <p>投稿のタイトル・本文・カテゴリ情報を収集し、OpenAI APIに <code>wp_remote_post</code> で送信します。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">3</span>
+        <div class="step-body">
+            <p>GPTが記事間の類似度をスコアリングし、関連度の高い記事を特定します。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">4</span>
+        <div class="step-body">
+            <p>分析結果をTransientキャッシュに保存し、次回以降のアクセスではキャッシュからデータを返します。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">5</span>
+        <div class="step-body">
+            <p>フロントエンドで設定に基づいた表示形式・カラーテーマで関連記事を描画します。</p>
+        </div>
+    </div>
+
+    <div class="callout callout-note">
+        <div class="callout-title">補足</div>
+        <p>カスタムテーブルやCronイベントは使用しないため、プラグインの削除時にデータベースに不要なデータが残ることはありません。<code>wp_options</code> の設定値、<code>post_meta</code>、Transient キャッシュのみが削除対象です。</p>
+    </div>
+
+    <nav class="page-nav">
+        <a href="related-settings.html" class="prev">&laquo; 詳細設定</a>
+        <span></span>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.1</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

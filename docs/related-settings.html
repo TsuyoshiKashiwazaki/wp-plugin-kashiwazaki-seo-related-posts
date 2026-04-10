@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>詳細設定 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.1</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="setup.html">インストール・初期設定</a></li>
+        <li class="active"><a href="related-settings.html">詳細設定</a></li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>詳細設定</h1>
+    <p class="lead">3階層設定、ショートコード・ウィジェット、キャッシュ管理など、Kashiwazaki SEO Related Posts の詳細な設定項目を解説します。</p>
+
+    <h2>3階層設定</h2>
+
+    <p>本プラグインは、グローバル・投稿タイプ別・投稿個別の3つのレベルで関連記事の設定をカスタマイズできます。下位の設定は上位の設定をオーバーライドします。</p>
+
+    <figure class="screenshot">
+        <img src="images/screenshots/02-related-detail.png" alt="関連記事設定" class="lightbox-trigger">
+        <figcaption>関連記事の表示設定</figcaption>
+    </figure>
+
+    <h3>設定の優先順位</h3>
+
+    <div class="step">
+        <span class="step-number">1</span>
+        <div class="step-body">
+            <p><strong>グローバル設定（最低優先）</strong> - サイト全体に適用されるデフォルト設定です。表示形式、カラーテーマ、表示件数などの基本設定を行います。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">2</span>
+        <div class="step-body">
+            <p><strong>投稿タイプ別設定（中優先）</strong> - 投稿（post）、固定ページ（page）、カスタム投稿タイプごとに異なる設定を適用できます。グローバル設定を上書きします。</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">3</span>
+        <div class="step-body">
+            <p><strong>投稿個別設定（最高優先）</strong> - 投稿編集画面のメタボックスから、特定の投稿に対して個別の設定を適用できます。すべての上位設定を上書きします。</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">設定レベル</th>
+                <th>設定可能な項目</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>グローバル</td>
+                <td>表示形式、カラーテーマ、表示件数、表示位置、OpenAI APIキー</td>
+            </tr>
+            <tr>
+                <td>投稿タイプ別</td>
+                <td>表示形式、カラーテーマ、表示件数、関連記事の有効/無効</td>
+            </tr>
+            <tr>
+                <td>投稿個別</td>
+                <td>手動で関連記事を選択、表示/非表示の切替、表示形式の個別設定</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-tip">
+        <div class="callout-title">ヒント</div>
+        <p>多くの場合、グローバル設定のみで十分です。特定の投稿タイプや投稿に対して異なる表示が必要な場合にのみ、下位レベルの設定を使用してください。</p>
+    </div>
+
+    <h2>投稿個別設定（メタボックス）</h2>
+
+    <p>投稿編集画面のメタボックスから、投稿ごとに関連記事をカスタマイズできます。</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">設定項目</th>
+                <th>説明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>関連記事の手動選択</td>
+                <td>AIの自動提案を上書きして、手動で関連記事を選択できます。</td>
+            </tr>
+            <tr>
+                <td>関連記事の非表示</td>
+                <td>特定の投稿で関連記事セクションを非表示にします。</td>
+            </tr>
+            <tr>
+                <td>表示形式の個別設定</td>
+                <td>グローバル・投稿タイプ別設定とは異なる表示形式を適用できます。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>ショートコード</h2>
+
+    <p>関連記事を任意の場所に手動で挿入するには、ショートコードを使用します。</p>
+
+    <h3>基本的な使い方</h3>
+    <pre><code>[kashiwazaki_related_posts]</code></pre>
+
+    <h3>パラメーター付き</h3>
+    <pre><code>[kashiwazaki_related_posts count="5" layout="grid" theme="blue"]</code></pre>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">パラメーター</th>
+                <th>説明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>count</td>
+                <td>表示件数（デフォルト: グローバル設定値）</td>
+            </tr>
+            <tr>
+                <td>layout</td>
+                <td>表示形式。list / grid / slider から選択（デフォルト: グローバル設定値）</td>
+            </tr>
+            <tr>
+                <td>theme</td>
+                <td>カラーテーマ。blue / green / red / purple / orange / gray から選択</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-note">
+        <div class="callout-title">補足</div>
+        <p>ショートコードはウィジェットエリアやテンプレートファイル内でも使用可能です。テンプレートファイルで使う場合は <code>&lt;?php echo do_shortcode('[kashiwazaki_related_posts]'); ?&gt;</code> と記述してください。</p>
+    </div>
+
+    <h2>ウィジェット</h2>
+
+    <p>ウィジェットエリアに関連記事を表示するには、WordPress管理画面の <strong>外観 &gt; ウィジェット</strong> から「Kashiwazaki SEO Related Posts」ウィジェットを追加します。</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">ウィジェット設定</th>
+                <th>説明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>タイトル</td>
+                <td>ウィジェットのタイトル（例: 「関連記事」）</td>
+            </tr>
+            <tr>
+                <td>表示件数</td>
+                <td>ウィジェットに表示する関連記事の件数</td>
+            </tr>
+            <tr>
+                <td>表示形式</td>
+                <td>リスト / グリッド から選択（ウィジェットではスライダー非推奨）</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>キャッシュ管理</h2>
+
+    <p>AI分析の結果はWordPressのTransient APIを使用してキャッシュされます。キャッシュにより、OpenAI APIへの不要なリクエストを防ぎ、ページ表示速度を維持します。</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">項目</th>
+                <th>詳細</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>キャッシュ方式</td>
+                <td>WordPress Transient API</td>
+            </tr>
+            <tr>
+                <td>キャッシュ対象</td>
+                <td>AI類似度分析の結果（投稿ごと）</td>
+            </tr>
+            <tr>
+                <td>保存先</td>
+                <td>wp_options テーブル（オブジェクトキャッシュ利用時はメモリ）</td>
+            </tr>
+            <tr>
+                <td>手動クリア</td>
+                <td>設定画面の「キャッシュクリア」ボタンで即座に削除可能</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-warning">
+        <div class="callout-title">注意</div>
+        <p>キャッシュをクリアすると、次回のページ表示時にOpenAI APIへのリクエストが発生し、APIコストが発生します。大量の投稿がある場合は、キャッシュクリアのタイミングに注意してください。</p>
+    </div>
+
+    <h2>AJAXハンドラー</h2>
+
+    <p>本プラグインは6つのAJAXハンドラーを使用して、管理画面での非同期操作を実現しています。</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%;">機能</th>
+                <th>説明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>AI分析の実行</td>
+                <td>投稿のAI類似度分析をバックグラウンドで実行します。</td>
+            </tr>
+            <tr>
+                <td>関連記事の取得</td>
+                <td>分析結果から関連記事リストを取得します。</td>
+            </tr>
+            <tr>
+                <td>手動選択の保存</td>
+                <td>投稿個別で手動選択した関連記事を保存します。</td>
+            </tr>
+            <tr>
+                <td>キャッシュクリア</td>
+                <td>指定した投稿または全投稿のキャッシュを削除します。</td>
+            </tr>
+            <tr>
+                <td>設定の保存</td>
+                <td>投稿タイプ別・投稿個別の設定を非同期で保存します。</td>
+            </tr>
+            <tr>
+                <td>プレビュー</td>
+                <td>関連記事の表示プレビューを生成します。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <nav class="page-nav">
+        <a href="setup.html" class="prev">&laquo; インストール・初期設定</a>
+        <a href="troubleshooting.html" class="next">トラブルシューティング &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.1</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>
