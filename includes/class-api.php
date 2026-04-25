@@ -14,7 +14,7 @@ class KashiwazakiSEORelatedPosts_API {
 
         check_ajax_referer('kashiwazaki_seo_related_posts_nonce', 'nonce');
 
-        $post_id = intval($_POST['post_id']);
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         $candidate_posts = isset($_POST['candidate_posts']) ? $_POST['candidate_posts'] : array();
         $max_posts = isset($_POST['max_posts']) ? intval($_POST['max_posts']) : 5;
 

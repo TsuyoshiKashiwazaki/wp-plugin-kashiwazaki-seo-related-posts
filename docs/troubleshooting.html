@@ -12,7 +12,7 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <h2 style="color:#fff;">Related Posts</h2>
-        <span class="version">v1.0.1</span>
+        <span class="version">v1.0.2</span>
         <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
     </div>
     <ul>
@@ -142,6 +142,40 @@
         <p>問題が解決しない場合は、一度プラグインを無効化してから再有効化してみてください。設定値はデータベースに保持されるため、再有効化後も設定は維持されます。</p>
     </div>
 
+    <h2>PHP 8.1 以降の互換性</h2>
+
+    <p>本プラグインは PHP 8.1 以降での運用を想定し、以下の対策を v1.0.2 で実施しています。</p>
+
+    <h3>解消した Deprecated 警告</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:55%;">警告内容</th>
+                <th>v1.0.2 での対応</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>strpos(): Passing null to parameter #1 ($haystack)</code><br><code>str_replace(): Passing null to parameter #3 ($subject)</code></td>
+                <td>投稿タイプ別設定ページの登録時に親スラッグ <code>null</code> を空文字列 <code>''</code> に変更。WordPress 公式パターン（Yoast SEO PR #19125、Jetpack issue #28108、Google Site Kit issue #5998）と同等の修正方式。</td>
+            </tr>
+            <tr>
+                <td><code>strip_tags(): Passing null to parameter #1 ($string)</code> (admin-header.php:41)</td>
+                <td><code>load-{$hook_suffix}</code> アクションでページタイトルを <code>$GLOBALS['title']</code> にセットし、admin ヘッダー読み込み時の <code>strip_tags(null)</code> を回避。</td>
+            </tr>
+            <tr>
+                <td><code>Undefined array key 'nonce' / 'post_id' / 'max_posts'</code> (AJAX 経路)</td>
+                <td>AJAX エンドポイント 4 箇所の nonce 検証および 5 箇所の <code>$_POST</code> 直接アクセスに <code>isset()</code> ガードと <code>wp_unslash()</code> を追加。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-info">
+        <div class="callout-title">補足</div>
+        <p><code>WP_DEBUG</code> および <code>WP_DEBUG_LOG</code> を有効化している環境で <code>wp-content/debug.log</code> に上記警告が記録されていた場合、v1.0.2 へのアップデートで解消します。アップデート後にも同種の警告が残る場合は、別プラグインまたはテーマが原因の可能性があります。</p>
+    </div>
+
     <h2>動作要件</h2>
 
     <table>
@@ -251,7 +285,7 @@
 
     <footer class="manual-footer">
         <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
-        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.1</p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.2</p>
     </footer>
 </main>
 

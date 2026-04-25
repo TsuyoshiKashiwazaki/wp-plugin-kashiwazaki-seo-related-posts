@@ -4,7 +4,7 @@ Tags: related posts, ai, seo, openai, gpt, similarity, cache, analytics
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,15 @@ API使用状況を完全に可視化できます：
 
 == Changelog ==
 
+= 1.0.2 =
+**PHP 8.1+ 互換性向上 + 防御的プログラミング強化**
+
+* `add_submenu_page()` の親スラッグ `null` を空文字列 `''` に変更し、`strpos(null)` / `str_replace(null)` の Deprecated 警告を解消
+* `load-{$hook}` アクションでページタイトルをグローバルに補完し、`admin-header.php:41` の `strip_tags(null)` Deprecated 警告を解消
+* AJAX 経路 4 箇所の nonce 検証で `$_POST['nonce']` の `isset()` チェックと `wp_unslash()` を追加
+* AJAX / API クラス内の `$_POST['post_id']` `$_POST['max_posts']` 直接アクセスを `isset()` ガード付きに変更
+* WordPress 公式パターン（Yoast / Jetpack / Site Kit と同等）に沿った隠しサブメニュー登録方式に刷新
+
 = 1.0.1 =
 **バグ修正**
 
@@ -199,6 +208,9 @@ API使用状況を完全に可視化できます：
 * キャッシュ状況の可視化
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+PHP 8.1+ で発生していた Deprecated 警告を解消し、AJAX 経路に `isset()` ガードを追加しました。debug.log の警告ログ汚染が大幅に減少します。
 
 = 1.0.1 =
 メタボックスのHTML構造を修正。他プラグインのメタボックス開閉に干渉する問題を解消しました。

@@ -56,14 +56,22 @@ class KashiwazakiSEORelatedPosts_Admin {
         );
 
         // 投稿タイプ別設定ページ（メニューには表示しない）
-        add_submenu_page(
-            null, // 親メニューをnullにすることでメニューに表示されない
+        // 親スラッグを '' で hidden submenu 化。WP コアが $title をセットしないため
+        // load-{$hook} アクションで $GLOBALS['title'] を補完する（admin-header.php:41 strip_tags(null) 回避）。
+        $hook = add_submenu_page(
+            '',
             '投稿タイプ別設定',
             '投稿タイプ別設定',
             'manage_options',
             'kashiwazaki-seo-related-posts-settings-post-type',
             array($this, 'post_type_settings_page')
         );
+
+        if ( $hook ) {
+            add_action( "load-{$hook}", function () {
+                $GLOBALS['title'] = '投稿タイプ別設定';
+            } );
+        }
     }
 
     // 削除：main_page関数は不要になったため削除
@@ -1209,7 +1217,7 @@ class KashiwazakiSEORelatedPosts_Admin {
         }
         // AI分析対象要素は必須として固定
         $options['search_methods'] = array('tags', 'categories', 'directory', 'title', 'excerpt');
-        $options['max_posts'] = absint($_POST['max_posts']);
+        $options['max_posts'] = isset($_POST['max_posts']) ? absint($_POST['max_posts']) : 5;
         $options['ai_candidate_buffer'] = isset($_POST['ai_candidate_buffer']) ? absint($_POST['ai_candidate_buffer']) : 20;
         $options['cache_lifetime'] = isset($_POST['cache_lifetime']) ? max(1, min(168, absint($_POST['cache_lifetime']))) : 24;
         $options['color_theme'] = isset($_POST['color_theme']) ? sanitize_text_field($_POST['color_theme']) : 'blue';
@@ -2839,13 +2847,13 @@ class KashiwazakiSEORelatedPosts_Admin {
     public function ajax_fetch_related_posts() {
 
         // nonce検証
-        if (!wp_verify_nonce($_POST['nonce'], 'kashiwazaki_fetch_related_posts')) {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(wp_unslash($_POST['nonce']), 'kashiwazaki_fetch_related_posts')) {
             wp_send_json_error('セキュリティエラー');
             return;
         }
 
         // パラメータ取得と検証
-        $post_id = absint($_POST['post_id']);
+        $post_id = isset($_POST['post_id']) ? absint($_POST['post_id']) : 0;
         if (!$post_id || !current_user_can('edit_post', $post_id)) {
 
             wp_send_json_error('権限エラー');
@@ -2854,7 +2862,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
         // AI分析対象要素は必須として固定
         $search_methods = array('tags', 'categories', 'directory', 'title', 'excerpt');
-        $max_posts = absint($_POST['max_posts']);
+        $max_posts = isset($_POST['max_posts']) ? absint($_POST['max_posts']) : 0;
         $target_post_types = isset($_POST['target_post_types']) ? array_map('sanitize_text_field', $_POST['target_post_types']) : array();
 
         try {
@@ -3065,13 +3073,13 @@ class KashiwazakiSEORelatedPosts_Admin {
      */
     public function ajax_clear_cache() {
         // nonce検証
-        if (!wp_verify_nonce($_POST['nonce'], 'kashiwazaki_fetch_related_posts')) {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(wp_unslash($_POST['nonce']), 'kashiwazaki_fetch_related_posts')) {
             wp_send_json_error('セキュリティエラー');
             return;
         }
 
         // パラメータ取得と検証
-        $post_id = absint($_POST['post_id']);
+        $post_id = isset($_POST['post_id']) ? absint($_POST['post_id']) : 0;
         if (!$post_id || !current_user_can('edit_post', $post_id)) {
             wp_send_json_error('権限エラー');
             return;
@@ -3096,7 +3104,7 @@ class KashiwazakiSEORelatedPosts_Admin {
      */
     public function ajax_reset_all_posts_to_defaults() {
         // nonce検証
-        if (!wp_verify_nonce($_POST['nonce'], 'kashiwazaki_fetch_related_posts')) {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(wp_unslash($_POST['nonce']), 'kashiwazaki_fetch_related_posts')) {
             wp_send_json_error('セキュリティエラー');
             return;
         }
@@ -3180,7 +3188,7 @@ class KashiwazakiSEORelatedPosts_Admin {
      */
     public function ajax_enable_all_posts() {
         // nonce検証
-        if (!wp_verify_nonce($_POST['nonce'], 'kashiwazaki_admin_action')) {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(wp_unslash($_POST['nonce']), 'kashiwazaki_admin_action')) {
             wp_send_json_error('セキュリティエラー');
             return;
         }
