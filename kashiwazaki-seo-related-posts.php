@@ -3,16 +3,26 @@
 Plugin Name: Kashiwazaki SEO Related Posts
 Plugin URI: https://www.tsuyoshikashiwazaki.jp
 Description: AI分析・3階層設定・API統計・一括操作で大規模サイトの関連記事を効率管理。OpenAI GPT対応、投稿タイプ別キャッシュ管理、詳細な個別記事設定が可能なエンタープライズ級SEOプラグイン
-Version: 1.0.2
+Version: 1.0.3
 Author: 柏崎剛 (Tsuyoshi Kashiwazaki)
 Author URI: https://www.tsuyoshikashiwazaki.jp/profile/
 */
 
 if (!defined('ABSPATH')) exit;
 
-define('KASHIWAZAKI_SEO_RELATED_POSTS_VERSION', '1.0.2');
+define('KASHIWAZAKI_SEO_RELATED_POSTS_VERSION', '1.0.3');
 define('KASHIWAZAKI_SEO_RELATED_POSTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('KASHIWAZAKI_SEO_RELATED_POSTS_PLUGIN_URL', plugin_dir_url(__FILE__));
+
+/**
+ * 見出しタグ名をホワイトリストで検証する（XSS 防止）。
+ * 許可タグ以外は既定値 'h2' にフォールバックする。
+ */
+function kashiwazaki_seo_related_posts_sanitize_heading_tag($tag) {
+    $allowed = array('h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'p');
+    $tag = is_string($tag) ? strtolower(trim($tag)) : '';
+    return in_array($tag, $allowed, true) ? $tag : 'h2';
+}
 
 class KashiwazakiSEORelatedPosts {
 
@@ -53,7 +63,7 @@ class KashiwazakiSEORelatedPosts {
     }
 
     public function enqueue_scripts() {
-        $version = KASHIWAZAKI_SEO_RELATED_POSTS_VERSION . '.' . time();
+        $version = KASHIWAZAKI_SEO_RELATED_POSTS_VERSION;
         wp_enqueue_style('kashiwazaki-seo-related-posts', KASHIWAZAKI_SEO_RELATED_POSTS_PLUGIN_URL . 'assets/css/style.css', array(), $version);
 
         // カラーテーマのCSS変数を追加
@@ -97,7 +107,7 @@ class KashiwazakiSEORelatedPosts {
 
         if (!$is_plugin_page && !$is_edit_page) return;
 
-        $version = KASHIWAZAKI_SEO_RELATED_POSTS_VERSION . '.' . time();
+        $version = KASHIWAZAKI_SEO_RELATED_POSTS_VERSION;
         wp_enqueue_style('kashiwazaki-seo-related-posts-admin', KASHIWAZAKI_SEO_RELATED_POSTS_PLUGIN_URL . 'assets/css/admin.css', array(), $version);
         wp_enqueue_script('kashiwazaki-seo-related-posts-admin', KASHIWAZAKI_SEO_RELATED_POSTS_PLUGIN_URL . 'assets/js/admin.js', array('jquery'), $version, true);
         wp_localize_script('kashiwazaki-seo-related-posts-admin', 'kashiwazaki_related_posts_ajax', array(

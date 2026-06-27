@@ -12,7 +12,7 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <h2 style="color:#fff;">Related Posts</h2>
-        <span class="version">v1.0.2</span>
+        <span class="version">v1.0.3</span>
         <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
     </div>
     <ul>
@@ -57,10 +57,10 @@
         <li>グローバル・投稿タイプ別・投稿個別の3階層設定</li>
         <li>リスト・グリッド・スライダーの3表示形式に対応</li>
         <li>6色のカラーテーマから選択可能</li>
-        <li>6つのAJAXハンドラーによる非同期処理</li>
-        <li>Transientキャッシュによるパフォーマンス最適化</li>
+        <li>4つのAJAXハンドラーによる非同期処理</li>
+        <li>投稿メタ（post_meta）キャッシュによるパフォーマンス最適化</li>
         <li>ショートコードとウィジェットに対応</li>
-        <li>フロントエンド: CSS 24KB、JS 7.4KB</li>
+        <li>フロントエンド: CSS 24KB、JS 7.6KB</li>
     </ul>
 
     <figure class="infographic">
@@ -111,12 +111,13 @@
         </tbody>
     </table>
 
-    <h2>v1.0.2 のハイライト</h2>
+    <h2>v1.0.3 のハイライト</h2>
 
     <ul>
-        <li>PHP 8.1+ で発生していた <code>strpos(null)</code> / <code>str_replace(null)</code> / <code>strip_tags(null)</code> 系の Deprecated 警告を解消</li>
-        <li>AJAX 経路の <code>$_POST</code> アクセスに <code>isset()</code> ガードと <code>wp_unslash()</code> を追加（不正リクエスト時のログ汚染を防止）</li>
-        <li>WordPress 公式パターン（Yoast SEO / Jetpack / Site Kit と同等）に沿った隠しサブメニュー登録方式に刷新</li>
+        <li>設定保存フォームの全経路に CSRF 対策（nonce 検証 + 権限チェック）を一元適用し、不正リクエストによる設定改ざんを防止</li>
+        <li>見出しタグの値を許可リスト方式（<code>h1</code>〜<code>h6</code> / <code>div</code> / <code>p</code>）でサニタイズし、保存時・出力時・管理画面表示時の格納型 XSS を防止</li>
+        <li>カテゴリフィルタを全検索方式および AI 補完経路に一律適用し、許可カテゴリ外の記事が混入しないよう関連記事の絞り込みを厳密化</li>
+        <li>アンインストール時にプラグインのオプション・投稿メタを完全削除（マルチサイト対応）</li>
     </ul>
 
     <h2>動作要件</h2>
@@ -160,7 +161,7 @@
 
     <footer class="manual-footer">
         <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
-        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.2</p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.3</p>
     </footer>
 </main>
 

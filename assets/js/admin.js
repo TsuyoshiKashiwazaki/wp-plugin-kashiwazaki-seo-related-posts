@@ -86,23 +86,6 @@ jQuery(document).ready(function ($) {
         return confirm('モデル「' + modelName + '」を復活させますか？');
     });
 
-    // AJAX設定（将来の拡張用）
-    if (typeof kashiwazaki_related_posts_ajax !== 'undefined') {
-        window.kashiwazkiRelatedPostsAjax = {
-            url: kashiwazaki_related_posts_ajax.ajax_url,
-            nonce: kashiwazaki_related_posts_ajax.nonce,
-
-            checkApiSettings: function (callback) {
-                $.post(this.url, {
-                    action: 'check_api_settings',
-                    nonce: this.nonce
-                }, function (response) {
-                    if (callback) callback(response);
-                });
-            }
-        };
-    }
-
     // 通知の自動非表示
     $('.notice').on('click', '.notice-dismiss', function () {
         $(this).closest('.notice').fadeOut();

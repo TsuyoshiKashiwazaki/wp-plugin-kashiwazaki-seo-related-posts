@@ -12,7 +12,7 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <h2 style="color:#fff;">Related Posts</h2>
-        <span class="version">v1.0.2</span>
+        <span class="version">v1.0.3</span>
         <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
     </div>
     <ul>
@@ -181,7 +181,7 @@
 
     <h2>キャッシュ管理</h2>
 
-    <p>AI分析の結果はWordPressのTransient APIを使用してキャッシュされます。キャッシュにより、OpenAI APIへの不要なリクエストを防ぎ、ページ表示速度を維持します。</p>
+    <p>AI分析の結果は投稿メタ（post_meta）を使用してキャッシュされます。キャッシュにより、OpenAI APIへの不要なリクエストを防ぎ、ページ表示速度を維持します。</p>
 
     <table>
         <thead>
@@ -193,7 +193,7 @@
         <tbody>
             <tr>
                 <td>キャッシュ方式</td>
-                <td>WordPress Transient API</td>
+                <td>WordPress post_meta</td>
             </tr>
             <tr>
                 <td>キャッシュ対象</td>
@@ -201,7 +201,7 @@
             </tr>
             <tr>
                 <td>保存先</td>
-                <td>wp_options テーブル（オブジェクトキャッシュ利用時はメモリ）</td>
+                <td>各投稿の post_meta（投稿ごとに保存）</td>
             </tr>
             <tr>
                 <td>手動クリア</td>
@@ -217,7 +217,7 @@
 
     <h2>AJAXハンドラー</h2>
 
-    <p>本プラグインは6つのAJAXハンドラーを使用して、管理画面での非同期操作を実現しています。</p>
+    <p>本プラグインは4つのAJAXハンドラー（関連記事の取得、キャッシュクリア、全投稿のデフォルトリセット、投稿タイプ一括有効化）を使用して、管理画面での非同期操作を実現しています。</p>
 
     <table>
         <thead>
@@ -228,28 +228,20 @@
         </thead>
         <tbody>
             <tr>
-                <td>AI分析の実行</td>
-                <td>投稿のAI類似度分析をバックグラウンドで実行します。</td>
-            </tr>
-            <tr>
                 <td>関連記事の取得</td>
-                <td>分析結果から関連記事リストを取得します。</td>
-            </tr>
-            <tr>
-                <td>手動選択の保存</td>
-                <td>投稿個別で手動選択した関連記事を保存します。</td>
+                <td>投稿のAI類似度分析を実行し、関連記事リストをバックグラウンドで取得します。</td>
             </tr>
             <tr>
                 <td>キャッシュクリア</td>
                 <td>指定した投稿または全投稿のキャッシュを削除します。</td>
             </tr>
             <tr>
-                <td>設定の保存</td>
-                <td>投稿タイプ別・投稿個別の設定を非同期で保存します。</td>
+                <td>デフォルト値へのリセット</td>
+                <td>全投稿の個別設定を共通設定の値に一括リセットします。</td>
             </tr>
             <tr>
-                <td>プレビュー</td>
-                <td>関連記事の表示プレビューを生成します。</td>
+                <td>投稿タイプ一括有効化</td>
+                <td>指定した投稿タイプの全投稿で関連記事表示を一括有効化します。</td>
             </tr>
         </tbody>
     </table>
@@ -261,7 +253,7 @@
 
     <footer class="manual-footer">
         <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
-        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.2</p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.3</p>
     </footer>
 </main>
 

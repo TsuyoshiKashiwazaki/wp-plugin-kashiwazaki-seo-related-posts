@@ -5,101 +5,10 @@ if (!defined('ABSPATH')) exit;
 class KashiwazakiSEORelatedPosts_API {
 
     public function __construct() {
-        add_action('wp_ajax_get_related_posts_ai', array($this, 'get_related_posts_ai_ajax'));
-        add_action('wp_ajax_nopriv_get_related_posts_ai', array($this, 'get_related_posts_ai_ajax'));
-        add_action('wp_ajax_check_api_settings', array($this, 'check_api_settings_ajax'));
+        // AI 連携は class-related-posts.php 経由で呼ばれる。
+        // 旧来の get_related_posts_ai / check_api_settings AJAX は未使用かつ
+        // 未初期化プロパティ・nonce 不整合を含むため削除した。
     }
-
-    public function get_related_posts_ai_ajax() {
-
-        check_ajax_referer('kashiwazaki_seo_related_posts_nonce', 'nonce');
-
-        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
-        $candidate_posts = isset($_POST['candidate_posts']) ? $_POST['candidate_posts'] : array();
-        $max_posts = isset($_POST['max_posts']) ? intval($_POST['max_posts']) : 5;
-
-
-        $current_post = get_post($post_id);
-        if (!$current_post) {
-
-            wp_send_json_error('投稿が見つかりません');
-        }
-
-        $options = get_option('kashiwazaki_seo_related_posts_options', array());
-        $api_key = isset($options['api_key']) ? $options['api_key'] : '';
-        $model = isset($options['model']) ? $options['model'] : $this->models->get_default_model();
-
-        if (empty($api_key)) {
-
-            wp_send_json_error('APIキーが設定されていません。管理画面で設定してください。');
-        }
-
-        $current_post_data = $this->extract_post_data($current_post);
-        $candidate_posts_data = array();
-
-        foreach ($candidate_posts as $candidate_id) {
-            $candidate_post = get_post($candidate_id);
-            if ($candidate_post) {
-                $candidate_posts_data[] = $this->extract_post_data($candidate_post);
-            }
-        }
-
-        $related_posts = $this->analyze_related_posts_with_ai($current_post_data, $candidate_posts_data, $api_key, $model, $max_posts);
-
-        if (is_wp_error($related_posts)) {
-            $error_message = $related_posts->get_error_message();
-
-            if (!empty($model)) {
-                $this->models->add_to_excluded_models($model);
-                $fallback_result = $this->try_fallback_model($current_post_data, $candidate_posts_data, $api_key, $max_posts, $model);
-
-                if ($fallback_result['success']) {
-                    wp_send_json_success(array(
-                        'related_posts' => $fallback_result['related_posts'],
-                        'message' => "⚠️ {$model} でエラーが発生したため、{$fallback_result['used_model']} に自動切り替えしました。",
-                        'switched_model' => $fallback_result['used_model']
-                    ));
-                } else {
-                    $error_message .= "\n\n⚠️ {$model} でエラーが発生し、他の利用可能なモデルでも処理できませんでした。\n設定画面でモデルを復活させるか、APIキーを確認してください。";
-                    wp_send_json_error($error_message);
-                }
-            } else {
-                wp_send_json_error($error_message);
-            }
-        }
-
-
-        $actual_model = !empty($model) ? $model : $this->models->get_default_model();
-        $model_display_name = $this->models->get_model_display_name($actual_model);
-
-        wp_send_json_success(array(
-            'related_posts' => $related_posts,
-            'used_model' => $model_display_name,
-            'model_id' => $actual_model
-        ));
-    }
-
-    private function extract_post_data($post) {
-        $categories = wp_get_post_categories($post->ID, array('fields' => 'names'));
-        $tags = wp_get_post_tags($post->ID, array('fields' => 'names'));
-        $excerpt = !empty($post->post_excerpt) ? $post->post_excerpt : wp_trim_words(strip_tags($post->post_content), 30);
-
-        $post_path = str_replace(home_url(), '', get_permalink($post->ID));
-        $path_segments = array_filter(explode('/', trim($post_path, '/')));
-
-        return array(
-            'id' => $post->ID,
-            'title' => $post->post_title,
-            'excerpt' => $excerpt,
-            'categories' => $categories,
-            'tags' => $tags,
-            'post_type' => $post->post_type,
-            'path_segments' => $path_segments,
-            'content_length' => strlen(strip_tags($post->post_content)),
-            'publish_date' => $post->post_date
-        );
-    }
-
     public function analyze_related_posts_with_ai($current_post_data, $candidate_posts_data, $api_key, $model, $max_posts, $search_methods = null) {
         // API設定を取得
         $options = get_option('kashiwazaki_seo_related_posts_options', array());
@@ -358,93 +267,6 @@ class KashiwazakiSEORelatedPosts_API {
             return new WP_Error('invalid_response', 'AIからの応答を解析できませんでした');
         }
     }
-
-    private function try_fallback_model($current_post_data, $candidate_posts_data, $api_key, $max_posts, $failed_model) {
-        $available_models = $this->get_fallback_models($failed_model);
-
-        if (empty($available_models)) {
-            return array('success' => false, 'message' => '利用可能なフォールバックモデルがありません。');
-        }
-
-        foreach ($available_models as $model_id => $model_name) {
-
-            $result = $this->analyze_related_posts_with_ai($current_post_data, $candidate_posts_data, $api_key, $model_id, $max_posts);
-
-            if (!is_wp_error($result)) {
-                update_option('kashiwazaki_seo_related_posts_model', $model_id);
-
-
-                return array(
-                    'success' => true,
-                    'related_posts' => $result,
-                    'used_model' => $this->models->extract_short_model_name($model_name)
-                );
-            } else {
-
-                $this->models->add_to_excluded_models($model_id);
-            }
-        }
-
-        return array('success' => false, 'message' => 'すべてのフォールバックモデルが失敗しました。');
-    }
-
-    private function get_fallback_models($failed_model) {
-        $available_models = $this->models->load_models_from_file();
-        unset($available_models[$failed_model]);
-
-        if (empty($available_models)) {
-            return array();
-        }
-
-        $priority_models = array();
-        $models_file = KASHIWAZAKI_SEO_RELATED_POSTS_PLUGIN_DIR . 'models.txt';
-
-        if (!file_exists($models_file)) {
-            return $available_models;
-        }
-
-        $lines = file($models_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $category_priority = array(
-            'flagship' => 1,
-            'premium' => 2,
-            'specialized' => 3,
-            'lightweight' => 4,
-            'custom' => 5
-        );
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line) || strpos($line, '#') === 0) continue;
-
-            $parts = explode('|', $line);
-            if (count($parts) >= 3) {
-                $model_id = trim($parts[0]);
-                $display_name = trim($parts[1]);
-                $category = trim($parts[2]);
-
-                if (isset($available_models[$model_id])) {
-                    $priority = isset($category_priority[$category]) ? $category_priority[$category] : 999;
-                    $priority_models[] = array(
-                        'model_id' => $model_id,
-                        'display_name' => $display_name,
-                        'priority' => $priority
-                    );
-                }
-            }
-        }
-
-        usort($priority_models, function($a, $b) {
-            return $a['priority'] - $b['priority'];
-        });
-
-        $sorted_models = array();
-        foreach ($priority_models as $model) {
-            $sorted_models[$model['model_id']] = $model['display_name'];
-        }
-
-        return $sorted_models;
-    }
-
     public function test_api_key($api_key, $api_provider = 'openai') {
 
         if (empty($api_key)) {
@@ -548,23 +370,6 @@ class KashiwazakiSEORelatedPosts_API {
     private function debug_log($message) {
         // Debug logging disabled
     }
-
-    public function check_api_settings_ajax() {
-        check_ajax_referer('kashiwazaki_seo_related_posts_nonce', 'nonce');
-
-        $options = get_option('kashiwazaki_seo_related_posts_options', array());
-        $api_key = isset($options['api_key']) ? $options['api_key'] : '';
-        $model = isset($options['model']) ? $options['model'] : '';
-
-        $settings = array(
-            'api_key_exists' => !empty($api_key),
-            'api_key_preview' => !empty($api_key) ? substr($api_key, 0, 10) . '...' . substr($api_key, -10) : '未設定',
-            'model' => $model
-        );
-
-        wp_send_json_success($settings);
-    }
-
     /**
      * API呼び出しをログに記録
      */

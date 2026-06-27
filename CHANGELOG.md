@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-06-26
+
+### Security
+- CSRF 対策: 設定保存フォームの全 POST 経路（共通設定 / 投稿タイプ別設定 / キャッシュクリア等）に nonce 検証と `manage_options` 権限チェックを一元適用。各フォーム（JavaScript 生成フォームを含む）に nonce フィールドを追加
+- 格納型 XSS 対策: 見出しタグ（`heading_tag`）の値を許可リスト方式（`h1`〜`h6` / `div` / `p`、不正値は `h2` にフォールバック）でサニタイズ。保存時・フロント出力時・管理画面表示時のすべてに適用
+- メタボックス保存の nonce 検証に `wp_unslash()` を適用
+
+### Fixed
+- カテゴリフィルタ（`filter_categories`）を全検索方式（カテゴリ / タグ / ディレクトリ / タイトル / 抜粋 / 横断）および AI 補完経路・管理画面プレビューに一律適用。許可カテゴリ外の記事が関連記事に混入し得る問題を解消
+- 関連記事描画ループ内の変数シャドーイングを解消
+- アンインストール時にプラグインのオプション・投稿メタを完全削除（マルチサイト対応の `uninstall.php` を追加）
+
+### Improved
+- アセットの読み込みバージョンから `time()` を除去し、ブラウザキャッシュを有効化
+- 未使用の AJAX ハンドラおよびデッドコードを除去
+- ドキュメントのキャッシュ方式（post_meta）および AJAX ハンドラ数の記述を実装と整合
+
 ## [1.0.2] - 2026-04-25
 
 ### Fixed

@@ -343,6 +343,15 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
                 break;
         }
 
+        // カテゴリフィルタが指定されている場合、許可カテゴリに属する候補のみに絞る
+        // （全ての検索方式に一律適用する）
+        if (!empty($options['filter_categories'])) {
+            $allowed_categories = $options['filter_categories'];
+            $candidates = array_values(array_filter($candidates, function($candidate_id) use ($allowed_categories) {
+                $post_categories = wp_get_post_categories($candidate_id);
+                return !empty(array_intersect($post_categories, $allowed_categories));
+            }));
+        }
 
         return $candidates;
     }
@@ -746,7 +755,8 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
         $heading_tag = isset($plugin_options['heading_tag']) ? $plugin_options['heading_tag'] : 'h2';
 
         $output = '<div class="kashiwazaki-related-posts">';
-        $output .= '<' . esc_attr($heading_tag) . ' class="kashiwazaki-related-posts-title">' . esc_html($heading_text) . '</' . esc_attr($heading_tag) . '>';
+        $heading_tag = kashiwazaki_seo_related_posts_sanitize_heading_tag($heading_tag);
+        $output .= '<' . $heading_tag . ' class="kashiwazaki-related-posts-title">' . esc_html($heading_text) . '</' . $heading_tag . '>';
         $output .= '<div class="kashiwazaki-related-posts-list">';
 
         foreach ($related_posts as $related_post) {
@@ -813,6 +823,11 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
             'orderby' => 'rand', // ランダム順
             'fields' => 'ids' // IDのみ取得で高速化
         );
+
+        // カテゴリフィルタ指定時は、許可カテゴリ内からのみランダム補完する
+        if (!empty($options['filter_categories'])) {
+            $args['category__in'] = $options['filter_categories'];
+        }
 
         $query = new WP_Query($args);
         $random_post_ids = $query->posts;

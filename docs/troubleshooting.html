@@ -12,7 +12,7 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <h2 style="color:#fff;">Related Posts</h2>
-        <span class="version">v1.0.2</span>
+        <span class="version">v1.0.3</span>
         <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
     </div>
     <ul>
@@ -176,6 +176,42 @@
         <p><code>WP_DEBUG</code> および <code>WP_DEBUG_LOG</code> を有効化している環境で <code>wp-content/debug.log</code> に上記警告が記録されていた場合、v1.0.2 へのアップデートで解消します。アップデート後にも同種の警告が残る場合は、別プラグインまたはテーマが原因の可能性があります。</p>
     </div>
 
+    <h2>セキュリティ対策（v1.0.3）</h2>
+
+    <p>v1.0.3 では以下のセキュリティ強化を実施しています。いずれもプラグインの利用方法を変えるものではなく、アップデートするだけで適用されます。</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:40%;">対策</th>
+                <th>v1.0.3 での対応</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>CSRF（クロスサイトリクエストフォージェリ）対策</td>
+                <td>設定保存フォームのすべての送信経路（共通設定・投稿タイプ別設定・キャッシュクリア等）に nonce 検証と <code>manage_options</code> 権限チェックを一元適用。JavaScript で生成されるフォームにも nonce フィールドを追加しました。</td>
+            </tr>
+            <tr>
+                <td>格納型 XSS（クロスサイトスクリプティング）対策</td>
+                <td>見出しタグ（heading_tag）の値を許可リスト方式（<code>h1</code>〜<code>h6</code> / <code>div</code> / <code>p</code>、不正値は <code>h2</code> にフォールバック）でサニタイズ。保存時・フロント出力時・管理画面表示時のすべてで適用します。</td>
+            </tr>
+            <tr>
+                <td>カテゴリフィルタの厳密化</td>
+                <td>カテゴリフィルタを全検索方式および AI 補完経路・管理画面プレビューに一律適用し、許可カテゴリ外の記事が関連記事に混入しないよう修正しました。</td>
+            </tr>
+            <tr>
+                <td>アンインストール時のデータ削除</td>
+                <td>プラグイン削除時に、保存したオプションと投稿メタを完全に削除します（マルチサイト対応）。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-info">
+        <div class="callout-title">補足</div>
+        <p>これらの対策は管理画面の設定保存と関連記事の表示に対する防御を強化するものです。通常の利用において表示や操作が変わることはありません。</p>
+    </div>
+
     <h2>動作要件</h2>
 
     <table>
@@ -208,12 +244,12 @@
     <h2>技術仕様</h2>
 
     <ul>
-        <li><strong>データ保存:</strong> wp_options (kashiwazaki_seo_related_posts_options), post_meta, transient cache</li>
+        <li><strong>データ保存:</strong> wp_options (kashiwazaki_seo_related_posts_options), post_meta</li>
         <li><strong>カスタムテーブル:</strong> なし</li>
         <li><strong>外部通信:</strong> OpenAI API (wp_remote_post)</li>
         <li><strong>Cronイベント:</strong> なし</li>
         <li><strong>メール送信:</strong> なし</li>
-        <li><strong>フロントエンド:</strong> CSS 24KB、JS 7.4KB</li>
+        <li><strong>フロントエンド:</strong> CSS 24KB、JS 7.6KB</li>
     </ul>
 
     <h2>アーキテクチャ</h2>
@@ -223,7 +259,7 @@
     <h3>フロントエンド</h3>
     <ul>
         <li>CSS（24KB）でリスト・グリッド・スライダーの3表示形式と6カラーテーマを実装</li>
-        <li>JavaScript（7.4KB）でスライダー動作とAJAX処理を実行</li>
+        <li>JavaScript（7.6KB）でスライダー動作とAJAX処理を実行</li>
         <li>JSON-LDの出力は行わない</li>
     </ul>
 
@@ -231,9 +267,9 @@
     <ul>
         <li>グローバル設定は <code>wp_options</code> テーブルに <code>kashiwazaki_seo_related_posts_options</code> キーで保存</li>
         <li>投稿個別の関連記事データは <code>post_meta</code> に保存</li>
-        <li>AI分析結果は Transient API でキャッシュ</li>
+        <li>AI分析結果は post_meta でキャッシュ</li>
         <li>OpenAI APIとの通信は <code>wp_remote_post</code> で実行</li>
-        <li>6つのAJAXハンドラーで管理画面の非同期操作を実現</li>
+        <li>4つのAJAXハンドラーで管理画面の非同期操作を実現</li>
     </ul>
 
     <h3>AI分析フロー</h3>
@@ -262,7 +298,7 @@
     <div class="step">
         <span class="step-number">4</span>
         <div class="step-body">
-            <p>分析結果をTransientキャッシュに保存し、次回以降のアクセスではキャッシュからデータを返します。</p>
+            <p>分析結果を投稿メタ（post_meta）に保存し、次回以降のアクセスではキャッシュからデータを返します。</p>
         </div>
     </div>
 
@@ -275,7 +311,7 @@
 
     <div class="callout callout-note">
         <div class="callout-title">補足</div>
-        <p>カスタムテーブルやCronイベントは使用しないため、プラグインの削除時にデータベースに不要なデータが残ることはありません。<code>wp_options</code> の設定値、<code>post_meta</code>、Transient キャッシュのみが削除対象です。</p>
+        <p>カスタムテーブルやCronイベントは使用しないため、プラグインの削除時にデータベースに不要なデータが残ることはありません。<code>wp_options</code> の設定値と <code>post_meta</code>（キャッシュ含む）が削除対象です。</p>
     </div>
 
     <nav class="page-nav">
@@ -285,7 +321,7 @@
 
     <footer class="manual-footer">
         <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
-        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.2</p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.3</p>
     </footer>
 </main>
 

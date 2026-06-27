@@ -118,12 +118,12 @@ class KashiwazakiSEORelatedPosts_Shortcode {
             // 管理画面で保存したキャッシュもショートコードで保存したキャッシュも両方対応
             $related_posts = array();
             foreach ($cached_results as $cached_item) {
-                $post_id = isset($cached_item['post_id']) ? $cached_item['post_id'] : (isset($cached_item['id']) ? $cached_item['id'] : null);
-                if ($post_id && get_post($post_id)) {
+                $cached_post_id = isset($cached_item['post_id']) ? $cached_item['post_id'] : (isset($cached_item['id']) ? $cached_item['id'] : null);
+                if ($cached_post_id && get_post($cached_post_id)) {
                     $related_posts[] = array(
-                        'post_id' => $post_id,
+                        'post_id' => $cached_post_id,
                         'score' => isset($cached_item['score']) ? $cached_item['score'] : 0,
-                        'post' => get_post($post_id),
+                        'post' => get_post($cached_post_id),
                         'method' => isset($cached_item['method']) ? $cached_item['method'] : 'cached'
                     );
                 }
@@ -288,8 +288,8 @@ class KashiwazakiSEORelatedPosts_Shortcode {
         $show_date = $this->parse_boolean($atts['show_date']);
         $options = get_option('kashiwazaki_seo_related_posts_options', array());
 
-        // 現在の投稿タイプを取得
-        $current_post_id = get_the_ID();
+        // 現在の投稿タイプを取得（ショートコードで post_id 指定時はその投稿を対象にする）
+        $current_post_id = !empty($atts['post_id']) ? intval($atts['post_id']) : get_the_ID();
         $post_type = get_post_type($current_post_id);
         $pt_settings_key = 'post_type_settings_' . $post_type;
         $pt_settings = isset($options[$pt_settings_key]) ? $options[$pt_settings_key] : array();
@@ -297,6 +297,7 @@ class KashiwazakiSEORelatedPosts_Shortcode {
         // 個別投稿のカスタムフィールドを確認（最優先）
         $custom_heading_text = get_post_meta($current_post_id, '_kashiwazaki_seo_related_posts_heading_text', true);
         $custom_color_theme = get_post_meta($current_post_id, '_kashiwazaki_seo_related_posts_color_theme', true);
+        $custom_heading_tag = get_post_meta($current_post_id, '_kashiwazaki_seo_related_posts_heading_tag', true);
 
         // 優先順位: 個別投稿 > 投稿タイプ別設定 > 共通設定
         $default_title = $custom_heading_text ? $custom_heading_text : (isset($pt_settings['heading_text']) ? $pt_settings['heading_text'] : (isset($options['heading_text']) ? $options['heading_text'] : '関連記事'));
@@ -324,8 +325,9 @@ class KashiwazakiSEORelatedPosts_Shortcode {
 
         // 見出しを表示（自動挿入時）
         if (!empty($atts['title'])) {
-            $heading_tag = isset($pt_settings['heading_tag']) ? $pt_settings['heading_tag'] : (isset($options['heading_tag']) ? $options['heading_tag'] : 'h2');
-            $output .= '<' . esc_attr($heading_tag) . ' class="kashiwazaki-related-posts-title">' . esc_html($atts['title']) . '</' . esc_attr($heading_tag) . '>';
+            $heading_tag = $custom_heading_tag ? $custom_heading_tag : (isset($pt_settings['heading_tag']) ? $pt_settings['heading_tag'] : (isset($options['heading_tag']) ? $options['heading_tag'] : 'h2'));
+            $heading_tag = kashiwazaki_seo_related_posts_sanitize_heading_tag($heading_tag);
+            $output .= '<' . $heading_tag . ' class="kashiwazaki-related-posts-title">' . esc_html($atts['title']) . '</' . $heading_tag . '>';
         }
 
         switch ($template) {

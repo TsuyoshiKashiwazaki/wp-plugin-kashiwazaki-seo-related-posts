@@ -1,6 +1,9 @@
 # IDE
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
@@ -8,8 +11,33 @@ Thumbs.db
 
 # Testing
 .playwright-mcp/
+.phpunit.result.cache
+.phpunit.cache/
 
-# Node
+# Node / 依存管理
 node_modules/
 package.json
 package-lock.json
+composer.json
+composer.lock
+vendor/
+
+# AI / 開発ツール設定（公開リポジトリに入れない）
+CLAUDE.md
+.codex
+.cursor/
+.aider*
+.copilot/
+
+# 開発作業の一時ファイル・ゴミ
+.tmp/
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.bmp
+/*.md.bak
+*.log
+
+# WordPress（誤コミット防止）
+wp-config.php

@@ -81,6 +81,14 @@ class KashiwazakiSEORelatedPosts_Admin {
     // api_test_page() の内容は render_api_settings_tab() に移動済み
 
     public function settings_page() {
+        // CSRF・権限の一元検証（全 POST 経路に適用）
+        if (!empty($_POST)) {
+            if (!current_user_can('manage_options')) {
+                wp_die(esc_html__('この操作を行う権限がありません。', 'kashiwazaki-seo-related-posts'));
+            }
+            check_admin_referer('kashiwazaki_settings', 'kashiwazaki_settings_nonce');
+        }
+
         // 保存処理
         if ($_POST && isset($_POST['save_api_settings'])) {
             $this->handle_save_api_settings();
@@ -188,6 +196,7 @@ class KashiwazakiSEORelatedPosts_Admin {
         </div>
 
         <form method="post">
+            <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
             <input type="hidden" name="save_api_settings" value="1" />
             <table class="form-table">
                 <tr>
@@ -233,6 +242,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
         <h3>🧪 APIキーテスト</h3>
         <form method="post">
+            <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
             <input type="hidden" name="test_api" value="1" />
             <table class="form-table">
                 <tr>
@@ -545,6 +555,7 @@ class KashiwazakiSEORelatedPosts_Admin {
         </div>
 
         <form method="post" id="common-settings-form">
+            <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
             <input type="hidden" name="save_common_settings" value="1" />
             <table class="form-table">
                 <tr>
@@ -724,7 +735,13 @@ class KashiwazakiSEORelatedPosts_Admin {
                                     input.name = 'clear_all_cache';
                                     input.value = '1';
 
+                                    var nonceInput = document.createElement('input');
+                                    nonceInput.type = 'hidden';
+                                    nonceInput.name = 'kashiwazaki_settings_nonce';
+                                    nonceInput.value = '<?php echo esc_js(wp_create_nonce('kashiwazaki_settings')); ?>';
+
                                     form.appendChild(input);
+                                    form.appendChild(nonceInput);
                                     document.body.appendChild(form);
                                     form.submit();
                                 });
@@ -805,6 +822,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                 <input type="submit" name="save_common_settings" class="button button-primary" value="共通設定を保存" />
         </form>
                 <form method="post" style="margin: 0;">
+                    <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
                     <input type="hidden" name="reset_common_settings" value="1" />
                     <input type="submit" class="button button-secondary" value="初期値にリセット" onclick="return confirm('共通設定を初期値にリセットしますか？');" />
                 </form>
@@ -888,6 +906,7 @@ class KashiwazakiSEORelatedPosts_Admin {
             <h3 style="color: #dc3232; margin-top: 0;">🗑️ 全設定リセット</h3>
             <p>すべての設定を削除してプラグインを初期状態に戻します。APIキーも削除されます。</p>
             <form method="post">
+                <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
                 <input type="hidden" name="reset_all_settings" value="1" />
                 <input type="submit" class="button button-link-delete" value="全設定をリセット" onclick="return confirm('本当に全ての設定を削除しますか？この操作は取り消せません。');" />
             </form>
@@ -923,6 +942,7 @@ class KashiwazakiSEORelatedPosts_Admin {
         </style>
 
         <form method="post">
+            <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
             <input type="hidden" name="save_metabox_settings" value="1" />
             <table class="widefat post-types-table" style="margin-top: 10px;">
                 <thead>
@@ -1142,7 +1162,7 @@ class KashiwazakiSEORelatedPosts_Admin {
         $options['target_post_types'] = isset($_POST['target_post_types']) && !empty($_POST['target_post_types']) ? array_map('sanitize_text_field', $_POST['target_post_types']) : $defaults['target_post_types'];
         $options['filter_categories'] = isset($_POST['filter_categories']) && is_array($_POST['filter_categories']) ? array_map('intval', $_POST['filter_categories']) : array();
         $options['heading_text'] = isset($_POST['heading_text']) ? sanitize_text_field($_POST['heading_text']) : $defaults['heading_text'];
-        $options['heading_tag'] = isset($_POST['heading_tag']) ? sanitize_text_field($_POST['heading_tag']) : $defaults['heading_tag'];
+        $options['heading_tag'] = isset($_POST['heading_tag']) ? kashiwazaki_seo_related_posts_sanitize_heading_tag($_POST['heading_tag']) : $defaults['heading_tag'];
 
         update_option('kashiwazaki_seo_related_posts_options', $options);
 
@@ -1203,45 +1223,6 @@ class KashiwazakiSEORelatedPosts_Admin {
         </div>
         <?php
     }
-
-    public function handle_save_settings() {
-
-
-        $options = get_option('kashiwazaki_seo_related_posts_options', array());
-
-        if (isset($_POST['model'])) {
-            $options['model'] = sanitize_text_field($_POST['model']);
-        }
-        if (isset($_POST['openai_model'])) {
-            $options['openai_model'] = sanitize_text_field($_POST['openai_model']);
-        }
-        // AI分析対象要素は必須として固定
-        $options['search_methods'] = array('tags', 'categories', 'directory', 'title', 'excerpt');
-        $options['max_posts'] = isset($_POST['max_posts']) ? absint($_POST['max_posts']) : 5;
-        $options['ai_candidate_buffer'] = isset($_POST['ai_candidate_buffer']) ? absint($_POST['ai_candidate_buffer']) : 20;
-        $options['cache_lifetime'] = isset($_POST['cache_lifetime']) ? max(1, min(168, absint($_POST['cache_lifetime']))) : 24;
-        $options['color_theme'] = isset($_POST['color_theme']) ? sanitize_text_field($_POST['color_theme']) : 'blue';
-        $options['slider_items_desktop'] = isset($_POST['slider_items_desktop']) ? max(1, min(8, absint($_POST['slider_items_desktop']))) : 3;
-        $options['slider_items_tablet'] = isset($_POST['slider_items_tablet']) ? max(1, min(6, absint($_POST['slider_items_tablet']))) : 2;
-        $options['slider_items_mobile'] = isset($_POST['slider_items_mobile']) ? max(1, min(3, absint($_POST['slider_items_mobile']))) : 1;
-        $options['display_method'] = sanitize_text_field($_POST['display_method']);
-        $options['insert_position'] = sanitize_text_field($_POST['insert_position']);
-        $options['target_post_types'] = isset($_POST['target_post_types']) ? array_map('sanitize_text_field', $_POST['target_post_types']) : array();
-        $options['metabox_post_types'] = isset($_POST['metabox_post_types']) ? array_map('sanitize_text_field', $_POST['metabox_post_types']) : array();
-        $options['heading_text'] = isset($_POST['heading_text']) ? sanitize_text_field($_POST['heading_text']) : '関連記事';
-        $options['heading_tag'] = isset($_POST['heading_tag']) ? sanitize_text_field($_POST['heading_tag']) : 'h2';
-
-        update_option('kashiwazaki_seo_related_posts_options', $options);
-
-        // デバッグモードの保存（別オプション）
-        $debug_mode = isset($_POST['debug_mode']) ? 1 : 0;
-        update_option('kashiwazaki_seo_related_posts_debug_mode', $debug_mode);
-
-
-
-        echo '<div class="notice notice-success"><p>設定を保存しました。</p></div>';
-    }
-
     public function handle_reset_all_settings() {
         global $wpdb;
 
@@ -1365,6 +1346,14 @@ class KashiwazakiSEORelatedPosts_Admin {
     }
 
     public function post_type_settings_page() {
+        // CSRF・権限の一元検証（全 POST 経路に適用）
+        if (!empty($_POST)) {
+            if (!current_user_can('manage_options')) {
+                wp_die(esc_html__('この操作を行う権限がありません。', 'kashiwazaki-seo-related-posts'));
+            }
+            check_admin_referer('kashiwazaki_settings', 'kashiwazaki_settings_nonce');
+        }
+
         // 保存処理
         if (isset($_POST['save_post_type_settings']) && isset($_POST['post_type'])) {
             $this->handle_save_post_type_settings();
@@ -1453,6 +1442,7 @@ class KashiwazakiSEORelatedPosts_Admin {
             </div>
 
             <form method="post">
+                <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
                 <input type="hidden" name="post_type" value="<?php echo esc_attr($post_type_name); ?>" />
                 <input type="hidden" name="save_post_type_settings" value="1" />
 
@@ -1696,8 +1686,14 @@ class KashiwazakiSEORelatedPosts_Admin {
                                         inputPostType.name = 'post_type';
                                         inputPostType.value = e.target.getAttribute('data-post-type');
 
+                                        var inputNonce = document.createElement('input');
+                                        inputNonce.type = 'hidden';
+                                        inputNonce.name = 'kashiwazaki_settings_nonce';
+                                        inputNonce.value = '<?php echo esc_js(wp_create_nonce('kashiwazaki_settings')); ?>';
+
                                         form.appendChild(inputCache);
                                         form.appendChild(inputPostType);
+                                        form.appendChild(inputNonce);
                                         document.body.appendChild(form);
                                         form.submit();
                                     });
@@ -1764,7 +1760,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                             </select>
                             <p class="description">
                                 見出しに使用するHTMLタグです。<br>
-                                <strong>共通設定のデフォルト値:</strong> <?php echo strtoupper($default_heading_tag); ?>
+                                <strong>共通設定のデフォルト値:</strong> <?php echo esc_html(strtoupper(kashiwazaki_seo_related_posts_sanitize_heading_tag($default_heading_tag))); ?>
                             </p>
                         </td>
                     </tr>
@@ -1818,6 +1814,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     <input type="submit" name="save_post_type_settings" class="button button-primary" value="設定を保存" />
             </form>
                     <form method="post" style="display: inline;">
+                        <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
                         <input type="hidden" name="post_type" value="<?php echo esc_attr($post_type_name); ?>" />
                         <input type="hidden" name="reset_post_type_settings" value="1" />
                         <input type="submit" class="button button-secondary" value="共通設定の値にリセット" onclick="return confirm('この投稿タイプの設定を共通設定の値にリセットしますか？');" />
@@ -1878,7 +1875,7 @@ class KashiwazakiSEORelatedPosts_Admin {
             'display_method' => isset($_POST['display_method']) ? sanitize_text_field($_POST['display_method']) : 'list',
             'color_theme' => isset($_POST['color_theme']) ? sanitize_text_field($_POST['color_theme']) : 'blue',
             'heading_text' => isset($_POST['heading_text']) ? sanitize_text_field($_POST['heading_text']) : '関連記事',
-            'heading_tag' => isset($_POST['heading_tag']) ? sanitize_text_field($_POST['heading_tag']) : 'h2',
+            'heading_tag' => isset($_POST['heading_tag']) ? kashiwazaki_seo_related_posts_sanitize_heading_tag($_POST['heading_tag']) : 'h2',
             'insert_position' => isset($_POST['insert_position']) ? sanitize_text_field($_POST['insert_position']) : 'after_content',
             'slider_items_desktop' => isset($_POST['slider_items_desktop']) ? absint($_POST['slider_items_desktop']) : 3,
             'slider_items_tablet' => isset($_POST['slider_items_tablet']) ? absint($_POST['slider_items_tablet']) : 2,
@@ -1912,33 +1909,6 @@ class KashiwazakiSEORelatedPosts_Admin {
 
         return $available_types;
     }
-
-    public function handle_api_test() {
-        $api_key = '';
-
-        if (isset($_POST['api_key']) && !empty($_POST['api_key'])) {
-            $api_key = sanitize_text_field($_POST['api_key']);
-        } else {
-            $options = get_option('kashiwazaki_seo_related_posts_options', array());
-            $api_key = isset($options['api_key']) ? $options['api_key'] : '';
-        }
-
-        if (empty($api_key)) {
-            echo '<div class="notice notice-error"><p>APIキーが入力されていません。</p></div>';
-            return;
-        }
-
-        $result = $this->api->test_api_key($api_key);
-
-        if ($result['success']) {
-            echo '<div class="notice notice-success"><p>' . esc_html($result['message']) . '</p></div>';
-            echo '<div style="background: #f0f8ff; border: 1px solid #0073aa; padding: 10px; margin: 10px 0;"><h4>通信ログ:</h4><pre>' . esc_html($result['log']) . '</pre></div>';
-        } else {
-            echo '<div class="notice notice-error"><p>' . esc_html($result['message']) . '</p></div>';
-            echo '<div style="background: #ffe; border: 1px solid #dc3232; padding: 10px; margin: 10px 0;"><h4>通信ログ:</h4><pre>' . esc_html($result['log']) . '</pre></div>';
-        }
-    }
-
     /**
      * メタボックスの追加
      */
@@ -2056,7 +2026,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                             echo isset($color_labels[$color_theme]) ? $color_labels[$color_theme] : $color_theme;
                         ?></li>
                         <li><strong>見出しテキスト:</strong> <?php echo esc_html($heading_text); ?></li>
-                        <li><strong>見出しタグ:</strong> <?php echo strtoupper($heading_tag); ?></li>
+                        <li><strong>見出しタグ:</strong> <?php echo esc_html(strtoupper(kashiwazaki_seo_related_posts_sanitize_heading_tag($heading_tag))); ?></li>
                         <li><strong>検索対象カテゴリ:</strong> <?php
                             if (empty($filter_categories)) {
                                 echo 'すべてのカテゴリ';
@@ -2295,7 +2265,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                             </select>
                             <p class="description">
                                 見出しのHTMLタグを選択してください。<br>
-                                <strong>デフォルト値:</strong> <?php echo strtoupper($default_heading_tag); ?>
+                                <strong>デフォルト値:</strong> <?php echo esc_html(strtoupper(kashiwazaki_seo_related_posts_sanitize_heading_tag($default_heading_tag))); ?>
                             </p>
                         </td>
                     </tr>
@@ -2762,7 +2732,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
         // Nonceの確認
         if (!isset($_POST['kashiwazaki_seo_related_posts_nonce']) ||
-            !wp_verify_nonce($_POST['kashiwazaki_seo_related_posts_nonce'], 'kashiwazaki_seo_related_posts_nonce')) {
+            !wp_verify_nonce(wp_unslash($_POST['kashiwazaki_seo_related_posts_nonce']), 'kashiwazaki_seo_related_posts_nonce')) {
             return;
         }
 
@@ -2820,7 +2790,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
             // 見出しタグ
             $heading_tag = isset($_POST['kashiwazaki_seo_related_posts_heading_tag']) ?
-                          sanitize_text_field($_POST['kashiwazaki_seo_related_posts_heading_tag']) : 'h2';
+                          kashiwazaki_seo_related_posts_sanitize_heading_tag($_POST['kashiwazaki_seo_related_posts_heading_tag']) : 'h2';
             update_post_meta($post_id, '_kashiwazaki_seo_related_posts_heading_tag', $heading_tag);
 
         } else {
@@ -2890,11 +2860,33 @@ class KashiwazakiSEORelatedPosts_Admin {
 
 
 
+            // フロント表示と同じカテゴリフィルタをプレビューにも適用する
+            // 優先順位: 個別投稿メタ > 投稿タイプ別設定 > 共通設定（フロントの解決順に一致）
+            $filter_categories = get_post_meta($post_id, '_kashiwazaki_seo_related_posts_filter_categories', true);
+            if (!is_array($filter_categories) || empty($filter_categories)) {
+                $preview_post_type = get_post_type($post_id);
+                $pt_settings_key = 'post_type_settings_' . $preview_post_type;
+                $pt_settings = isset($plugin_options[$pt_settings_key]) ? $plugin_options[$pt_settings_key] : array();
+                $use_custom_settings = isset($pt_settings['use_custom_settings']) && $pt_settings['use_custom_settings'];
+
+                if ($use_custom_settings && !empty($pt_settings['filter_categories'])) {
+                    $filter_categories = $pt_settings['filter_categories'];
+                } elseif (!empty($plugin_options['filter_categories'])) {
+                    $filter_categories = $plugin_options['filter_categories'];
+                } else {
+                    $filter_categories = array();
+                }
+            }
+            if (!is_array($filter_categories)) {
+                $filter_categories = array();
+            }
+
             $options = array(
                 'max_posts' => $max_posts,
                 'use_ai' => $use_ai,
                 'post_types' => $target_post_types,
-                'search_methods' => $search_methods
+                'search_methods' => $search_methods,
+                'filter_categories' => $filter_categories
             );
 
             $related_posts = $this->related_posts->get_related_posts($post_id, $options);
