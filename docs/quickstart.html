@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>はじめての設定 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li class="active"><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>はじめての設定</h1>
+    <p class="lead">インストールしてから、記事に関連記事が表示されるまでの手順です。4 ステップ、10 分ほどで終わります。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">ステップ 1：プラグインを有効化する</a></li>
+            <li><a href="#s2">ステップ 2：OpenAI の APIキーを入れる</a></li>
+            <li><a href="#s3">ステップ 3：記事のベクトルを作る</a></li>
+            <li><a href="#s4">ステップ 4：記事で関連記事を表示する</a></li>
+            <li><a href="#s5">表示を確かめる</a></li>
+            <li><a href="#s6">次に読むページ</a></li>
+        </ol>
+    </div>
+
+
+<figure class="infographic">
+    <img src="images/infographics/ig-05-quickstart.png" alt="はじめての設定 4 ステップ" class="lightbox-trigger">
+</figure>
+
+<h2 id="s1">ステップ 1：プラグインを有効化する</h2>
+
+<div class="step">
+    <span class="step-number">1</span>
+    <div class="step-body">
+        <p>管理画面の「プラグイン」→「新規追加」→「プラグインのアップロード」で zip ファイルをアップロードし、「今すぐインストール」→「有効化」を押します。</p>
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <div class="step-body">
+        <p>左メニューに「Kashiwazaki SEO Related Posts」が追加されます。クリックすると設定画面が開きます。</p>
+    </div>
+</div>
+
+<figure class="screenshot">
+    <img src="images/screenshots/00-menu-location.png" alt="管理画面メニューの位置" class="lightbox-trigger">
+    <figcaption>左メニューの「Kashiwazaki SEO Related Posts」</figcaption>
+</figure>
+
+<h2 id="s2">ステップ 2：OpenAI の APIキーを入れる</h2>
+
+<div class="step">
+    <span class="step-number">1</span>
+    <div class="step-body">
+        <p><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI Platform の API keys</a> で APIキーを作ります（sk- で始まる文字列）。</p>
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <div class="step-body">
+        <p>設定画面の「🤖 AIのAPI設定」タブを開き、「OpenAI API キー」に貼り付けます。</p>
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">3</span>
+    <div class="step-body">
+        <p>「関連記事の選び方」は <strong>意味の近さで選ぶ（推奨）</strong> のままにして、「API設定を保存」を押します。保存後は「設定済み: sk-********abcd」のように、キーの先頭と末尾だけが表示されます。</p>
+    </div>
+</div>
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-01-settings.png" alt="AIのAPI設定タブ" class="lightbox-trigger">
+    <figcaption>「🤖 AIのAPI設定」タブ</figcaption>
+</figure>
+
+<div class="callout callout-tip">
+    <div class="callout-title">キーをデータベースに置きたくない場合</div>
+    <p>wp-config.php に <code>define('KASHIWAZAKI_SEO_RELATED_POSTS_OPENAI_API_KEY', 'sk-...');</code> と書くと、設定画面で入力しなくてもそのキーを使います。</p>
+</div>
+
+<h2 id="s3">ステップ 3：記事のベクトルを作る</h2>
+
+<p>「意味の近さ」で選ぶには、記事ごとに内容を表す数値（ベクトル）が必要です。</p>
+
+<div class="step">
+    <span class="step-number">1</span>
+    <div class="step-body">
+        <p>同じタブの「ベクトルの作成状況」で <strong>「未作成の記事をまとめて作成」</strong> を押します。</p>
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <div class="step-body">
+        <p>「369 / 369 件 作成済み」のように、左右の数が同じになれば完了です。数百件なら数十秒で終わります。費用は数百件でも 1 円未満です。</p>
+    </div>
+</div>
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-05-vectors.png" alt="ベクトルの作成状況" class="lightbox-trigger">
+    <figcaption>ベクトルの作成状況</figcaption>
+</figure>
+
+<div class="callout callout-note">
+    <div class="callout-title">ボタンを押さなくても作られます</div>
+    <p>ベクトルはバックグラウンド（WP-Cron）でも順に作られ、記事を公開・更新したときにも自動で作り直されます。ボタンは「今すぐ全部作る」ためのものです。</p>
+</div>
+
+<h2 id="s4">ステップ 4：記事で関連記事を表示する</h2>
+
+<p>関連記事は、記事ごとの「この記事で関連記事を表示する」が ON の記事にだけ表示されます。どちらかの方法で ON にします。</p>
+
+<h3>方法 A：投稿タイプの全記事をまとめて ON にする</h3>
+<div class="step">
+    <span class="step-number">1</span>
+    <div class="step-body">
+        <p>「📋 投稿タイプ別設定」タブを開き、表示したい投稿タイプの「関連記事を表示」にチェックを入れて「表示設定を保存」を押します。</p>
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <div class="step-body">
+        <p>その行の緑のボタン <strong>「すべて有効化」</strong> を押します。その投稿タイプの今ある全記事が ON になります。</p>
+    </div>
+</div>
+
+<figure class="screenshot">
+    <img src="images/screenshots/pt-02-table.png" alt="投稿タイプ別設定の表" class="lightbox-trigger">
+    <figcaption>「すべて有効化」は「関連記事を表示」にチェックが入った投稿タイプに表示されます</figcaption>
+</figure>
+
+<h3>方法 B：記事ごとに ON にする</h3>
+<div class="step">
+    <span class="step-number">1</span>
+    <div class="step-body">
+        <p>記事の編集画面の下にある「🔗 Kashiwazaki SEO Related Posts」欄で、<strong>「この記事で関連記事を表示する」</strong> にチェックを入れて記事を保存します。</p>
+    </div>
+</div>
+
+<figure class="screenshot">
+    <img src="images/screenshots/post-01-metabox.png" alt="記事の編集画面の関連記事の設定欄" class="lightbox-trigger">
+    <figcaption>記事の編集画面の関連記事の設定欄</figcaption>
+</figure>
+
+<div class="callout callout-warning">
+    <div class="callout-title">これから作る記事は OFF で始まります</div>
+    <p>「すべて有効化」が ON にするのは、押した時点で存在する記事だけです。新しい記事を公開するときは、編集画面でチェックを入れてください。</p>
+</div>
+
+<h2 id="s5">表示を確かめる</h2>
+
+<p>記事を開くと、本文の後（初期設定）に関連記事が表示されます。表示形式や色は「<a href="common-settings.html">共通設定</a>」で変えられます。</p>
+
+<figure class="screenshot">
+    <img src="images/screenshots/front-slider.png" alt="関連記事の表示例（スライダー）" class="lightbox-trigger">
+    <figcaption>表示例（スライダー・オレンジ）</figcaption>
+</figure>
+
+<h2 id="s6">次に読むページ</h2>
+<ul>
+    <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a>：何をもとに選んでいるか、費用はどこでかかるか</li>
+    <li><a href="priority.html">設定の優先順位と反映</a>：設定を変えたのに記事に効かないときに読むページ</li>
+    <li><a href="display.html">表示形式とカラーテーマ</a>：見た目の選び方</li>
+</ul>
+
+    <nav class="page-nav">
+        <a href="index.html" class="prev">&laquo; 概要</a>
+        <a href="how-it-works.html" class="next">関連記事が選ばれる仕組み &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

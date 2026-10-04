@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>概要 - Kashiwazaki SEO Related Posts マニュアル</title>
-    <link rel="stylesheet" href="css/style.css?v=1">
+    <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 <button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
@@ -12,156 +12,147 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <h2 style="color:#fff;">Related Posts</h2>
-        <span class="version">v1.0.3</span>
+        <span class="version">v1.0.4</span>
         <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
     </div>
     <ul>
+        <li class="section-label">はじめに</li>
         <li class="active"><a href="index.html">概要</a></li>
-        <li><a href="setup.html">インストール・初期設定</a></li>
-        <li><a href="related-settings.html">詳細設定</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
         <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
     </ul>
 </nav>
 
 <main class="content">
     <h1>Kashiwazaki SEO Related Posts マニュアル</h1>
-    <img src="images/main-visual.png" alt="Kashiwazaki SEO Related Posts メインビジュアル" style="width:100%;border-radius:6px;margin-bottom:16px;">
-    <p class="lead">Kashiwazaki SEO Related Posts は、OpenAI GPTを活用して記事間の類似度を分析し、最適な関連記事を自動提案するAI搭載のWordPressプラグインです。グローバル・投稿タイプ別・投稿個別の3階層設定、リスト・グリッド・スライダーの3表示形式、6色のカラーテーマに対応し、高品質な内部リンク構造の構築を支援します。</p>
-
-    <p>関連記事の表示は、内部リンクの強化とユーザーの回遊率向上に直結します。本プラグインはOpenAI GPTを活用して記事間の類似度を分析し、最適な関連記事を自動提案します。</p>
-
-    <h2>主な機能</h2>
-
-    <div class="feature-cards">
-        <div class="feature-card">
-            <span class="icon">&#129302;</span>
-            <h4>AI関連記事</h4>
-            <p>OpenAI GPTで記事間の類似度を分析し最適な関連記事を自動提案</p>
-        </div>
-        <div class="feature-card">
-            <span class="icon">&#128444;</span>
-            <h4>表示形式</h4>
-            <p>リスト・グリッド・スライダーの3形式に対応。6色のカラーテーマ</p>
-        </div>
-        <div class="feature-card">
-            <span class="icon">&#9881;</span>
-            <h4>3階層設定</h4>
-            <p>グローバル・投稿タイプ別・投稿個別の3段階で関連記事設定をカスタマイズ</p>
-        </div>
+    <p class="lead">Kashiwazaki SEO Related Posts は、記事の本文まで読んで「内容が近い記事」を関連記事として自動で表示する WordPress プラグインです。OpenAI の Embeddings で記事を数値（ベクトル）に変えて比べるので、同じ言葉を使っていない記事でも、話題が近ければ関連記事に選びます。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">できること</a></li>
+            <li><a href="#s2">設定画面の場所</a></li>
+            <li><a href="#s3">はじめて使うとき</a></li>
+            <li><a href="#s4">SEO・GEO（生成AI最適化）への効果</a></li>
+            <li><a href="#s5">動作要件</a></li>
+        </ol>
     </div>
 
-    <h2>プラグインの特長</h2>
 
-    <ul>
-        <li>OpenAI GPTによるAI関連記事の自動提案（類似度スコアリング）</li>
-        <li>グローバル・投稿タイプ別・投稿個別の3階層設定</li>
-        <li>リスト・グリッド・スライダーの3表示形式に対応</li>
-        <li>6色のカラーテーマから選択可能</li>
-        <li>4つのAJAXハンドラーによる非同期処理</li>
-        <li>投稿メタ（post_meta）キャッシュによるパフォーマンス最適化</li>
-        <li>ショートコードとウィジェットに対応</li>
-        <li>フロントエンド: CSS 24KB、JS 7.6KB</li>
-    </ul>
+<img src="images/main-visual.png" alt="Kashiwazaki SEO Related Posts メインビジュアル" style="width:100%;border-radius:6px;margin:8px 0 16px;">
 
-    <figure class="infographic">
-        <img src="images/infographics/overview-flow.png" alt="プラグイン概要フロー図">
-        <figcaption>Kashiwazaki SEO Related Posts の全体フロー</figcaption>
-    </figure>
+<h2 id="s1">できること</h2>
 
-    <h2>SEO・GEO（生成AI最適化）への効果</h2>
-
-    <h3>内部リンク品質の向上</h3>
-    <p>AIによる関連記事のレコメンデーションは、単純なカテゴリやタグベースの関連記事よりも高品質な内部リンク構造を構築します。記事間の意味的な類似度に基づくリンクにより、ユーザーにとっても検索エンジンにとっても有用なナビゲーションが実現されます。</p>
-
-    <h3>リンクエクイティの分散とクロール効率</h3>
-    <p>適切な内部リンクはリンクエクイティ（PageRank）をサイト内に効率的に分散させます。また、検索エンジンのクローラーがサイト内のページをより効率的に発見・インデックスできるようになります。</p>
-
-    <h3>直帰率の低下とセッション時間の向上</h3>
-    <p>関連性の高い記事を表示することで、ユーザーの直帰率が低下し、サイト内の回遊が促進されます。セッション時間の増加はユーザーエンゲージメントの指標として、検索エンジンからの評価向上に寄与します。</p>
-
-    <h3>生成AI（GEO）への対応</h3>
-    <p>強力な内部リンク構造は、AIがサイト内のトピッククラスター（関連するコンテンツ群）を理解するのに役立ちます。AIは内部リンクのパターンからコンテンツ間の関連性を把握し、特定トピックに対するサイトの専門性を評価する材料として活用する可能性があります。</p>
-
-    <h2>目次（マニュアル構成）</h2>
-
-    <table>
-        <thead>
-            <tr>
-                <th style="width:35%;">ページ</th>
-                <th>内容</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><a href="index.html">概要</a></td>
-                <td>プラグインの機能概要、SEO/GEO効果、動作要件</td>
-            </tr>
-            <tr>
-                <td><a href="setup.html">インストール・初期設定</a></td>
-                <td>インストール手順、OpenAI APIキー設定、表示形式・カラーテーマの基本設定</td>
-            </tr>
-            <tr>
-                <td><a href="related-settings.html">詳細設定</a></td>
-                <td>3階層設定、ショートコード・ウィジェット、キャッシュ管理</td>
-            </tr>
-            <tr>
-                <td><a href="troubleshooting.html">トラブルシューティング</a></td>
-                <td>よくある問題と対処法、PHP 8.1+ 互換性、動作要件、技術仕様、アーキテクチャ</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h2>v1.0.3 のハイライト</h2>
-
-    <ul>
-        <li>設定保存フォームの全経路に CSRF 対策（nonce 検証 + 権限チェック）を一元適用し、不正リクエストによる設定改ざんを防止</li>
-        <li>見出しタグの値を許可リスト方式（<code>h1</code>〜<code>h6</code> / <code>div</code> / <code>p</code>）でサニタイズし、保存時・出力時・管理画面表示時の格納型 XSS を防止</li>
-        <li>カテゴリフィルタを全検索方式および AI 補完経路に一律適用し、許可カテゴリ外の記事が混入しないよう関連記事の絞り込みを厳密化</li>
-        <li>アンインストール時にプラグインのオプション・投稿メタを完全削除（マルチサイト対応）</li>
-    </ul>
-
-    <h2>動作要件</h2>
-
-    <table>
-        <thead>
-            <tr>
-                <th style="width:35%;">項目</th>
-                <th>要件</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>WordPress</td>
-                <td>5.0 以上</td>
-            </tr>
-            <tr>
-                <td>PHP</td>
-                <td>7.4 以上</td>
-            </tr>
-            <tr>
-                <td>OpenAI APIキー</td>
-                <td>AI関連記事機能を使用する場合は必須</td>
-            </tr>
-            <tr>
-                <td>対応ブラウザ</td>
-                <td>Chrome、Firefox、Safari、Edge（最新版）</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="callout callout-tip">
-        <div class="callout-title">ヒント</div>
-        <p>インストール後すぐに使い始めたい場合は、<a href="setup.html">インストール・初期設定</a>ページに進んでください。</p>
+<div class="feature-cards">
+    <div class="feature-card">
+        <span class="icon">&#129504;</span>
+        <h4>意味の近さで選ぶ</h4>
+        <p>記事の内容を数値にして比べ、内容の近い記事を選びます。費用はほとんどかかりません。</p>
     </div>
+    <div class="feature-card">
+        <span class="icon">&#128444;</span>
+        <h4>3 つの表示形式</h4>
+        <p>リスト・グリッド・スライダーと、6 色のカラーテーマから選べます。</p>
+    </div>
+    <div class="feature-card">
+        <span class="icon">&#9881;</span>
+        <h4>3 段階の設定</h4>
+        <p>共通設定・投稿タイプ別・記事ごとに、表示件数や見た目を変えられます。</p>
+    </div>
+</div>
+
+<ul>
+    <li>関連記事の選び方を 3 つから選べます（意味の近さで選ぶ / 意味の近さ＋GPT / 従来の方式）。</li>
+    <li>使える embedding モデル・GPT モデルは OpenAI から自動で取得します。新しいモデルが出ると設定画面に表示されます。</li>
+    <li>選んだ関連記事は記事ごとに保存（キャッシュ）し、ページ表示を遅くしません。訪問者がページを開いたときに OpenAI を呼ぶことはありません。</li>
+    <li>本文の前・後・最初の段落の後に自動で入れるほか、ショートコードやウィジェットでも表示できます。</li>
+    <li>OpenAI の APIキーは暗号化して保存し、API の呼び出し回数を GPT と Embedding に分けて確認できます。</li>
+    <li>設定画面の各項目には「?」のツールチップがあり、マウスを乗せると説明が出ます。</li>
+</ul>
+
+<figure class="infographic">
+    <img src="images/infographics/ig-01-how-it-works.png" alt="関連記事が選ばれるまでの流れ" class="lightbox-trigger">
+    <figcaption>関連記事が選ばれるまで（詳しくは「<a href="how-it-works.html">関連記事が選ばれる仕組み</a>」）</figcaption>
+</figure>
+
+<h2 id="s2">設定画面の場所</h2>
+
+<p>有効化すると、管理画面の左メニューに「Kashiwazaki SEO Related Posts」が追加されます。設定画面には 4 つのタブがあります。</p>
+
+<figure class="screenshot">
+    <img src="images/screenshots/00-menu-location.png" alt="管理画面メニューの位置" class="lightbox-trigger">
+    <figcaption>管理画面の左メニュー</figcaption>
+</figure>
+
+<table>
+    <thead><tr><th style="width:30%;">タブ・画面</th><th>何を設定するか</th><th style="width:22%;">説明ページ</th></tr></thead>
+    <tbody>
+        <tr><td>🤖 AIのAPI設定</td><td>OpenAI の APIキー、関連記事の選び方、モデル、ベクトルの作成、API の呼び出し統計</td><td><a href="api-settings.html">AIのAPI設定</a></td></tr>
+        <tr><td>🌐 共通設定</td><td>サイト全体の初期値（関連記事に選ぶ範囲、表示件数、表示形式、色、見出し、挿入位置、キャッシュ期限）</td><td><a href="common-settings.html">共通設定</a></td></tr>
+        <tr><td>📋 投稿タイプ別設定</td><td>投稿タイプごとの初期値（カスタム設定）、まとめて有効化、記事ごとの設定の一括反映</td><td><a href="post-type-settings.html">投稿タイプ別設定</a></td></tr>
+        <tr><td>📚 使い方</td><td>セットアップの手順、ショートコードの書き方、全設定のリセット</td><td><a href="shortcode.html">ショートコード</a></td></tr>
+        <tr><td>記事の編集画面</td><td>その記事で関連記事を出すか、記事ごとの表示件数・見た目、関連記事の確認</td><td><a href="post-settings.html">記事ごとの設定</a></td></tr>
+    </tbody>
+</table>
+
+<h2 id="s3">はじめて使うとき</h2>
+
+<p>インストールから関連記事が表示されるまでは 4 ステップです。手順は「<a href="quickstart.html">はじめての設定</a>」にまとめています。</p>
+
+<figure class="infographic">
+    <img src="images/infographics/ig-05-quickstart.png" alt="はじめての設定 4 ステップ" class="lightbox-trigger">
+</figure>
+
+<div class="callout callout-warning">
+    <div class="callout-title">新しい記事は「表示しない」で始まります</div>
+    <p>関連記事は、記事ごとの「この記事で関連記事を表示する」が ON の記事にだけ表示されます。新しく作った記事は OFF で始まるので、記事の編集画面で ON にするか、投稿タイプ別設定の「すべて有効化」でまとめて ON にしてください。</p>
+</div>
+
+<h2 id="s4">SEO・GEO（生成AI最適化）への効果</h2>
+
+<h3>内部リンクの質が上がる</h3>
+<p>タグやカテゴリが同じというだけでなく、内容が近い記事どうしをリンクでつなぐので、読者にも検索エンジンにも意味のある内部リンクになります。</p>
+
+<h3>回遊が増え、直帰が減る</h3>
+<p>読んでいる記事に近い話題の記事を本文の後に見せることで、次の記事を読んでもらいやすくなります。</p>
+
+<h3>トピックのまとまりが伝わる</h3>
+<p>近い記事どうしがリンクでつながると、検索エンジンや生成AIが「このサイトはこの話題をまとめて扱っている」と理解しやすくなります（トピッククラスター）。</p>
+
+<h2 id="s5">動作要件</h2>
+
+<table>
+    <thead><tr><th style="width:35%;">項目</th><th>要件</th></tr></thead>
+    <tbody>
+        <tr><td>WordPress</td><td>5.0 以上</td></tr>
+        <tr><td>PHP</td><td>7.4 以上（APIキーの暗号化に libsodium を使います。PHP 7.2 以降は標準で入っています）</td></tr>
+        <tr><td>OpenAI APIキー</td><td>意味の近さ・GPT で選ぶ場合に必要。キーがなければタグ・カテゴリ・文字の一致で選びます</td></tr>
+        <tr><td>WP-Cron</td><td>記事のベクトルをバックグラウンドで作るのに使います（止めている場合は手動でも作れます）</td></tr>
+    </tbody>
+</table>
 
     <nav class="page-nav">
         <span></span>
-        <a href="setup.html" class="next">インストール・初期設定 &raquo;</a>
+        <a href="quickstart.html" class="next">はじめての設定 &raquo;</a>
     </nav>
 
     <footer class="manual-footer">
         <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
-        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.3</p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
     </footer>
 </main>
 

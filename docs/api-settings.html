@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIのAPI設定 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li class="active"><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>AIのAPI設定</h1>
+    <p class="lead">「🤖 AIのAPI設定」タブでは、OpenAI の APIキー、関連記事の選び方、使うモデル、記事のベクトルの作成、API の呼び出し回数を設定・確認します。各項目の「?」にマウスを乗せると、画面でも説明が表示されます。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">OpenAI API キー</a></li>
+            <li><a href="#s2">関連記事の選び方</a></li>
+            <li><a href="#s3">Embedding モデル・GPT モデル</a></li>
+            <li><a href="#s4">ベクトルの作成状況</a></li>
+            <li><a href="#s5">API設定を保存</a></li>
+            <li><a href="#s6">APIキーテスト</a></li>
+            <li><a href="#s7">API呼び出し統計</a></li>
+        </ol>
+    </div>
+
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-01-settings.png" alt="AIのAPI設定タブの上半分" class="lightbox-trigger">
+    <figcaption>「🤖 AIのAPI設定」タブ（設定の部分）</figcaption>
+</figure>
+
+<h2 id="s1">OpenAI API キー</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-02-key.png" alt="OpenAI API キーの欄" class="lightbox-trigger">
+</figure>
+
+<table>
+    <thead><tr><th style="width:30%;">項目・ボタン</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>設定済み: sk-********abcd</td><td>保存済みのキーの先頭と末尾だけを表示します。キーそのものは画面（HTML）に出しません。</td></tr>
+        <tr><td>入力欄（変更するときだけ入力）</td><td>新しいキーを入れて保存すると置き換わります。<strong>空欄のまま保存すると今のキーをそのまま使います。</strong></td></tr>
+        <tr><td>保存済みのキーを削除</td><td>押すと確認のダイアログが出て、OK でキーを削除します。</td></tr>
+        <tr><td>OpenAI APIキーを取得</td><td>OpenAI Platform のキー作成画面を開きます。</td></tr>
+    </tbody>
+</table>
+
+<div class="callout callout-note">
+    <div class="callout-title">キーは暗号化して保存します</div>
+    <p>キーはデータベースに暗号化して保存します（鍵は wp-config.php の認証用キー・ソルトから作ります）。wp-config.php のソルトを変えると保存済みのキーを読めなくなるので、その場合はキーを入れ直してください。wp-config.php に定数 <code>KASHIWAZAKI_SEO_RELATED_POSTS_OPENAI_API_KEY</code> を書けば、データベースにキーを置かずに使えます（この場合、設定画面の入力欄は表示されません）。</p>
+</div>
+
+<h2 id="s2">関連記事の選び方</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-03-selection-mode.png" alt="関連記事の選び方とツールチップ" class="lightbox-trigger">
+    <figcaption>「?」にマウスを乗せると説明が出ます</figcaption>
+</figure>
+
+<table>
+    <thead><tr><th style="width:30%;">選択肢</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td><strong>意味の近さで選ぶ（推奨）</strong></td><td>記事のベクトルの近い順に選びます。結果は毎回同じで、費用はほとんどかかりません。GPT は使いません。</td></tr>
+        <tr><td>意味の近さで候補を絞り、GPT が最終的に選ぶ</td><td>内容の近い記事を候補にして、その中から GPT が選びます。関連記事を選ぶたびに GPT の料金がかかります。</td></tr>
+        <tr><td>従来の方式</td><td>タグ・カテゴリ・文字の一致で候補を集め、GPT が選びます。v1.0.3 までの方式です。</td></tr>
+    </tbody>
+</table>
+
+<p>3 つの違いは「<a href="how-it-works.html">関連記事が選ばれる仕組み</a>」で図にしています。<strong>選び方を変えて保存すると、全記事の関連記事キャッシュを消します</strong>（次に表示されたときに新しい方式で選び直します）。</p>
+
+<h2 id="s3">Embedding モデル・GPT モデル</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-04-models.png" alt="Embedding モデルと GPT モデル" class="lightbox-trigger">
+</figure>
+
+<table>
+    <thead><tr><th style="width:30%;">項目</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>Embedding モデル</td><td>記事をベクトルに変えるモデルです。既定は <code>text-embedding-3-small</code>（推奨）。<strong>変えると全記事のベクトルを作り直し</strong>、関連記事キャッシュも消します（モデルが違うベクトルどうしは比べられないため）。</td></tr>
+        <tr><td>GPT モデル</td><td>「意味の近さ＋GPT」「従来の方式」で使うモデルです。「意味の近さで選ぶ」では使いません。モデルを変えて保存するときに 1 回だけ試しに呼び出し、関連記事の選定に使えないモデル（Responses API 専用のモデルなど）は保存しません。</td></tr>
+        <tr><td>OpenAI から最新の一覧を取得</td><td>OpenAI の <code>GET /v1/models</code> から、使えるモデルの一覧をその場で取り直します。一覧は 1 日 1 回は自動で取り直すので、ふだんは押さなくても新しいモデルが表示されます。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s4">ベクトルの作成状況</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-05-vectors.png" alt="ベクトルの作成状況" class="lightbox-trigger">
+</figure>
+
+<p>「作成済みの記事数 / 対象の公開記事数」と、使っているモデルを表示します。</p>
+
+<ul>
+    <li>記事を公開・更新すると、その記事のベクトルを自動で作ります（WP-Cron）。</li>
+    <li>「<strong>未作成の記事をまとめて作成</strong>」を押すと、まだの記事のベクトルをその場で作ります。導入直後やモデルを変えた直後に使います。</li>
+    <li>APIキーが無いときはボタンを押せません。</li>
+</ul>
+
+<h2 id="s5">API設定を保存</h2>
+
+<p>ここまでの項目は「API設定を保存」で保存します。保存すると、変えた内容によって次のことが起きます。</p>
+
+<table>
+    <thead><tr><th style="width:35%;">変えたもの</th><th>保存したときに起きること</th></tr></thead>
+    <tbody>
+        <tr><td>APIキー</td><td>暗号化して保存します。</td></tr>
+        <tr><td>関連記事の選び方</td><td>全記事の関連記事キャッシュを消します。</td></tr>
+        <tr><td>Embedding モデル</td><td>全記事の関連記事キャッシュを消し、ベクトルを作り直します。</td></tr>
+        <tr><td>GPT モデル</td><td>試しに 1 回呼び出し、使えなければ保存しません（エラーを表示します）。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s6">APIキーテスト</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-06-test.png" alt="APIキーテスト" class="lightbox-trigger">
+</figure>
+
+<p>入力したキー（空欄なら保存済みのキー）で OpenAI のモデル一覧を取得し、キーが使えるか確かめます。トークンを使わないので料金はかかりません。</p>
+
+<h2 id="s7">API呼び出し統計</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/api-07-stats.png" alt="API呼び出し統計と直近30日間の推移" class="lightbox-trigger">
+    <figcaption>GPT と Embedding に分けて表示します</figcaption>
+</figure>
+
+<table>
+    <thead><tr><th style="width:30%;">表示</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>GPT（関連記事の選定）</td><td>GPT で関連記事を選んだ回数です。「意味の近さで選ぶ」では増えません。</td></tr>
+        <tr><td>Embedding（記事のベクトル作成）</td><td>記事のベクトルを作った回数です。最大 20 記事分を 1 回にまとめるので、記事数より少なく数えられます。</td></tr>
+        <tr><td>期間</td><td>直近 24 時間・1 週間・1 か月・3 か月・1 年・すべての、成功・失敗・合計・成功率です。</td></tr>
+        <tr><td>直近 30 日間の推移</td><td>今日を含む 30 日間の 1 日ごとの回数です（実線: GPT、破線: Embedding）。</td></tr>
+    </tbody>
+</table>
+
+<p>モデル一覧の取得・APIキーのテスト・GPT モデルを保存するときの確認は数えません。記録は 1 年を過ぎたものから自動で消し、それぞれ最大 10,000 件まで残します。v1.0.3 までの記録は区別がないため GPT 側に入っています。</p>
+
+    <nav class="page-nav">
+        <a href="how-it-works.html" class="prev">&laquo; 関連記事が選ばれる仕組み</a>
+        <a href="common-settings.html" class="next">共通設定 &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

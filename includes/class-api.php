@@ -4,6 +4,9 @@ if (!defined('ABSPATH')) exit;
 
 class KashiwazakiSEORelatedPosts_API {
 
+    // GPT の出力の上限。推論モデルは考える分のトークンも含むため余裕を持たせる (使った分だけ課金される)
+    const CHAT_MAX_COMPLETION_TOKENS = 4000;
+
     public function __construct() {
         // AI 連携は class-related-posts.php 経由で呼ばれる。
         // 旧来の get_related_posts_ai / check_api_settings AJAX は未使用かつ
@@ -16,7 +19,7 @@ class KashiwazakiSEORelatedPosts_API {
         // OpenAI APIのみ使用
         $url = 'https://api.openai.com/v1/chat/completions';
         // OpenAI用のモデル設定を取得（デフォルト: gpt-4o-mini）
-        $model = isset($options['openai_model']) ? $options['openai_model'] : 'gpt-4o-mini';
+        $model = isset($options['openai_model']) && KashiwazakiSEORelatedPosts_Embeddings::is_valid_model_id($options['openai_model']) ? $options['openai_model'] : 'gpt-4o-mini';
 
         $current_info = "【現在の記事】\n";
         $current_info .= "タイトル: " . $current_post_data['title'] . "\n";
@@ -175,7 +178,9 @@ class KashiwazakiSEORelatedPosts_API {
                     'content' => $prompt
                 )
             ),
-            'max_tokens' => 200,
+            // max_tokens は非推奨で o 系・推論モデルに使えないため max_completion_tokens を使う。
+            // 推論モデルは考える分のトークンもこの上限に数えるので、答え (記事 ID の列) より大きく取る
+            'max_completion_tokens' => self::CHAT_MAX_COMPLETION_TOKENS,
             'temperature' => $temperature
         );
 
@@ -183,39 +188,12 @@ class KashiwazakiSEORelatedPosts_API {
             $data['model'] = $model;
         }
 
-        // OpenAI APIのヘッダーを設定
-        $headers = array(
-            'Authorization' => 'Bearer ' . $api_key,
-            'Content-Type' => 'application/json'
-        );
-
-        $json_data = json_encode($data);
-
-        $request_options = array(
-            'headers' => $headers,
-            'body' => $json_data,
-            'timeout' => 30,
-            'user-agent' => 'WordPress/' . get_bloginfo('version') . '; ' . get_site_url(),
-            'sslverify' => true,
-            'httpversion' => '1.1'
-        );
-
-
-        $response = wp_remote_post($url, $request_options);
-
-        if (is_wp_error($response)) {
-            $error_message = $response->get_error_message();
+        $sent = $this->post_chat($api_key, $data);
+        if (is_wp_error($sent)) {
             $this->log_api_failure();
-            return new WP_Error('api_error', "API接続エラー: {$error_message}");
+            return $sent;
         }
-
-        $status_code = wp_remote_retrieve_response_code($response);
-        $body = wp_remote_retrieve_body($response);
-
-        if ($status_code !== 200) {
-            $this->log_api_failure();
-            return new WP_Error('api_error', "APIエラー (HTTP {$status_code}): " . $body);
-        }
+        $body = $sent['body'];
 
         // API呼び出し成功時にログを記録
         $this->log_api_call();
@@ -267,91 +245,206 @@ class KashiwazakiSEORelatedPosts_API {
             return new WP_Error('invalid_response', 'AIからの応答を解析できませんでした');
         }
     }
-    public function test_api_key($api_key, $api_provider = 'openai') {
-
+    /**
+     * APIキーの確認（GET /v1/models。トークンを消費しない）
+     */
+    public function test_api_key($api_key) {
         if (empty($api_key)) {
             return array(
                 'success' => false,
-                'message' => 'APIキーが入力されていません。',
-                'log' => 'APIキーが空です'
+                'message' => 'APIキーが入力されていません。'
             );
         }
 
-        // OpenAI APIのみ使用
-        $url = 'https://api.openai.com/v1/chat/completions';
-        // テストは常に最も安価なモデルで実行
-        $data = array(
-            'model' => 'gpt-4o-mini',
-            'messages' => array(
-                array(
-                    'role' => 'user',
-                    'content' => 'Hello'
-                )
-            ),
-            'max_tokens' => 10,
-            'temperature' => 0.7
+        $models = $this->list_models($api_key);
+        if (is_wp_error($models)) {
+            return array(
+                'success' => false,
+                'message' => $models->get_error_message()
+            );
+        }
+
+        $embedding_count = 0;
+        foreach ($models as $model) {
+            if (isset($model['id']) && is_string($model['id']) && stripos($model['id'], 'embedding') !== false) {
+                $embedding_count++;
+            }
+        }
+
+        return array(
+            'success' => true,
+            'message' => sprintf('APIキーは有効です（利用できるモデル %d 件、うち embedding モデル %d 件）', count($models), $embedding_count)
         );
-        $headers = array(
-            'Authorization' => 'Bearer ' . $api_key,
-            'Content-Type' => 'application/json'
-        );
+    }
 
+    /**
+     * POST /v1/chat/completions。モデルが temperature の指定を受け付けない (HTTP 400) ときは、temperature を外して 1 回だけ送り直す
+     *
+     * @return array{status:int, body:string}|WP_Error HTTP 200 のときだけ配列
+     */
+    private function post_chat($api_key, array $data) {
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $response = wp_remote_post('https://api.openai.com/v1/chat/completions', array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $api_key,
+                    'Content-Type' => 'application/json'
+                ),
+                'body' => wp_json_encode($data),
+                'timeout' => 60,
+                'user-agent' => $this->user_agent(),
+            ));
 
-        $json_data = json_encode($data);
+            if (is_wp_error($response)) {
+                return new WP_Error('api_connection', 'OpenAI に接続できませんでした: ' . $response->get_error_message(), array('status' => 0));
+            }
 
-        $response = wp_remote_post($url, array(
-            'headers' => $headers,
-            'body' => $json_data,
-            'timeout' => 30,
-            'user-agent' => 'WordPress/' . get_bloginfo('version') . '; ' . get_site_url()
+            $status = (int) wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
+            if ($status === 200) {
+                return array('status' => $status, 'body' => $body);
+            }
+
+            if ($attempt === 0 && $status === 400 && isset($data['temperature']) && $this->is_param_error($body, 'temperature')) {
+                unset($data['temperature']);
+                continue;
+            }
+
+            return new WP_Error('api_http_' . $status, sprintf('OpenAI API エラー（HTTP %d）: %s', $status, $this->format_error_message($body)), array('status' => $status));
+        }
+        return new WP_Error('api_error', 'OpenAI API の呼び出しに失敗しました', array('status' => 0));
+    }
+
+    /**
+     * エラー応答が指定したパラメータについてのものか (error.param、無ければ error.message に名前があるか)
+     */
+    private function is_param_error($body, $param) {
+        $decoded = json_decode((string) $body, true);
+        if (!is_array($decoded) || !isset($decoded['error']) || !is_array($decoded['error'])) {
+            return false;
+        }
+        if (isset($decoded['error']['param']) && $decoded['error']['param'] === $param) {
+            return true;
+        }
+        return isset($decoded['error']['message']) && is_string($decoded['error']['message']) && stripos($decoded['error']['message'], $param) !== false;
+    }
+
+    /**
+     * GPT モデルが関連記事の選定 (chat completions) に使えるかを、短い依頼を 1 回送って確かめる
+     *
+     * @return true|WP_Error
+     */
+    public function test_chat_model($api_key, $model) {
+        $sent = $this->post_chat($api_key, array(
+            'model' => $model,
+            'messages' => array(array('role' => 'user', 'content' => 'Reply with OK.')),
+            'max_completion_tokens' => self::CHAT_MAX_COMPLETION_TOKENS,
+            'temperature' => 0.1
+        ));
+        if (is_wp_error($sent)) {
+            return $sent;
+        }
+        $decoded = json_decode($sent['body'], true);
+        if (!is_array($decoded) || !isset($decoded['choices'][0]['message'])) {
+            return new WP_Error('invalid_response', 'このモデルの応答を解析できませんでした');
+        }
+        return true;
+    }
+
+    /**
+     * 利用できるモデルの一覧（GET /v1/models）
+     *
+     * @return array|WP_Error data 配列（各要素に id / created / owned_by など）
+     */
+    public function list_models($api_key) {
+        $response = wp_remote_get('https://api.openai.com/v1/models', array(
+            'headers' => array('Authorization' => 'Bearer ' . $api_key),
+            'timeout' => 15,
+            'user-agent' => $this->user_agent(),
         ));
 
+        $decoded = $this->decode_response($response);
+        if (is_wp_error($decoded)) {
+            return $decoded;
+        }
+        if (!isset($decoded['data']) || !is_array($decoded['data'])) {
+            return new WP_Error('invalid_response', 'OpenAI からのモデル一覧を解析できませんでした');
+        }
+        return $decoded['data'];
+    }
 
-        if (is_wp_error($response)) {
-            $error_message = $response->get_error_message();
-            return array(
-                'success' => false,
-                'message' => 'ネットワークエラー: ' . $error_message,
-                'log' => 'WP_Error: ' . $error_message
-            );
+    /**
+     * 文章のベクトルを作る（POST /v1/embeddings、encoding_format=base64）
+     *
+     * @param string   $api_key
+     * @param string   $model
+     * @param string[] $texts
+     * @return string[]|WP_Error 入力と同じ順の base64 文字列（float32 リトルエンディアン）
+     */
+    public function create_embeddings($api_key, $model, array $texts) {
+        $texts = array_values($texts);
+        if (empty($texts)) {
+            return array();
         }
 
-        $status_code = wp_remote_retrieve_response_code($response);
+        $response = wp_remote_post('https://api.openai.com/v1/embeddings', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $api_key,
+                'Content-Type' => 'application/json'
+            ),
+            'body' => wp_json_encode(array(
+                'model' => $model,
+                'input' => $texts,
+                'encoding_format' => 'base64'
+            )),
+            'timeout' => 30,
+            'user-agent' => $this->user_agent(),
+        ));
+
+        $decoded = $this->decode_response($response);
+        if (is_wp_error($decoded)) {
+            $this->log_api_failure('embedding');
+            return $decoded;
+        }
+        if (!isset($decoded['data']) || !is_array($decoded['data'])) {
+            $this->log_api_failure('embedding');
+            return new WP_Error('invalid_response', 'OpenAI からの embedding を解析できませんでした');
+        }
+
+        $this->log_api_call('embedding');
+
+        $vectors = array_fill(0, count($texts), '');
+        foreach ($decoded['data'] as $item) {
+            if (isset($item['index'], $item['embedding']) && is_int($item['index']) && is_string($item['embedding']) && $item['index'] >= 0 && $item['index'] < count($texts)) {
+                $vectors[$item['index']] = $item['embedding'];
+            }
+        }
+        return $vectors;
+    }
+
+    /**
+     * HTTP 応答を JSON として読む。失敗時は HTTP ステータスを data に入れた WP_Error
+     */
+    private function decode_response($response) {
+        if (is_wp_error($response)) {
+            return new WP_Error('api_connection', 'OpenAI に接続できませんでした: ' . $response->get_error_message(), array('status' => 0));
+        }
+
+        $status = (int) wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
 
-
-        $log_info = sprintf(
-            "リクエスト: %s\nAPIキー: %s\nステータス: %d\nレスポンス: %s",
-            $url,
-            substr($api_key, 0, 10) . '...' . substr($api_key, -10),
-            $status_code,
-            substr($body, 0, 200) . (strlen($body) > 200 ? '...' : '')
-        );
-
-        if ($status_code === 200) {
-            $decoded = json_decode($body, true);
-            if (isset($decoded['choices'][0]['message']['content'])) {
-                $ai_response = trim($decoded['choices'][0]['message']['content']);
-
-                return array(
-                    'success' => true,
-                    'message' => 'APIキーが正常に動作しています（AI応答: ' . substr($ai_response, 0, 50) . '...）',
-                    'log' => $log_info . "\nAI応答: " . $ai_response
-                );
-            } else {
-                return array(
-                    'success' => false,
-                    'message' => 'AIからの応答を解析できませんでした',
-                    'log' => $log_info
-                );
-            }
-        } else {
-            return array(
-                'success' => false,
-                'message' => "HTTP {$status_code}: " . $this->format_error_message($body),
-                'log' => $log_info
-            );
+        if ($status !== 200) {
+            return new WP_Error('api_http_' . $status, sprintf('OpenAI API エラー（HTTP %d）: %s', $status, $this->format_error_message($body)), array('status' => $status));
         }
+
+        $decoded = json_decode($body, true);
+        if (!is_array($decoded)) {
+            return new WP_Error('json_error', 'OpenAI からの応答を解析できませんでした', array('status' => $status));
+        }
+        return $decoded;
+    }
+
+    private function user_agent() {
+        return 'WordPress/' . get_bloginfo('version') . '; ' . get_site_url();
     }
 
     private function format_error_message($body) {
@@ -364,57 +457,65 @@ class KashiwazakiSEORelatedPosts_API {
                 return $decoded['error'];
             }
         }
-        return substr($body, 0, 200);
+        return wp_strip_all_tags(substr((string) $body, 0, 200));
     }
 
     private function debug_log($message) {
         // Debug logging disabled
     }
     /**
+     * API 呼び出し統計の記録先 (種類ごとに成功・失敗の option を分ける)
+     * gpt: 関連記事の選定 (chat completions) / embedding: 記事のベクトル作成
+     */
+    public static function log_option($kind, $type) {
+        $options = array(
+            'gpt' => array(
+                'success' => 'kashiwazaki_seo_related_posts_api_logs',
+                'failure' => 'kashiwazaki_seo_related_posts_api_failure_logs',
+            ),
+            'embedding' => array(
+                'success' => 'kashiwazaki_seo_related_posts_embedding_api_logs',
+                'failure' => 'kashiwazaki_seo_related_posts_embedding_api_failure_logs',
+            ),
+        );
+        $kind = isset($options[$kind]) ? $kind : 'gpt';
+        $type = ($type === 'failure') ? 'failure' : 'success';
+        return $options[$kind][$type];
+    }
+
+    /**
      * API呼び出しをログに記録
      */
-    private function log_api_call() {
-        // ログを取得
-        $api_logs = get_option('kashiwazaki_seo_related_posts_api_logs', array());
-
-        // 現在のタイムスタンプを追加
-        $api_logs[] = time();
-
-        // 1年以上前のログを削除（メモリ節約）
-        $one_year_ago = time() - 31536000;
-        $api_logs = array_filter($api_logs, function($timestamp) use ($one_year_ago) {
-            return $timestamp > $one_year_ago;
-        });
-
-        // ログを保存（最大10000件まで）
-        if (count($api_logs) > 10000) {
-            $api_logs = array_slice($api_logs, -10000);
-        }
-
-        update_option('kashiwazaki_seo_related_posts_api_logs', array_values($api_logs));
+    private function log_api_call($kind = 'gpt') {
+        $this->record_log(self::log_option($kind, 'success'));
     }
 
     /**
      * API失敗をログに記録
      */
-    private function log_api_failure() {
-        // 失敗ログを取得
-        $api_failure_logs = get_option('kashiwazaki_seo_related_posts_api_failure_logs', array());
+    private function log_api_failure($kind = 'gpt') {
+        $this->record_log(self::log_option($kind, 'failure'));
+    }
 
-        // 現在のタイムスタンプを追加
-        $api_failure_logs[] = time();
+    /**
+     * 時刻を 1 件足す（1年以上前のものと、10000 件を超えた古いものは消す）
+     */
+    private function record_log($option_name) {
+        $logs = get_option($option_name, array());
+        if (!is_array($logs)) {
+            $logs = array();
+        }
+        $logs[] = time();
 
-        // 1年以上前のログを削除（メモリ節約）
         $one_year_ago = time() - 31536000;
-        $api_failure_logs = array_filter($api_failure_logs, function($timestamp) use ($one_year_ago) {
+        $logs = array_filter($logs, function($timestamp) use ($one_year_ago) {
             return $timestamp > $one_year_ago;
         });
 
-        // ログを保存（最大10000件まで）
-        if (count($api_failure_logs) > 10000) {
-            $api_failure_logs = array_slice($api_failure_logs, -10000);
+        if (count($logs) > 10000) {
+            $logs = array_slice($logs, -10000);
         }
 
-        update_option('kashiwazaki_seo_related_posts_api_failure_logs', array_values($api_failure_logs));
+        update_option($option_name, array_values($logs));
     }
 }

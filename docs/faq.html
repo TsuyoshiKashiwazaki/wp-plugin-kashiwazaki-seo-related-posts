@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>よくある質問 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li class="active"><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>よくある質問</h1>
+    <p class="lead">設定や費用について、よく聞かれる質問と答えです。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">選び方と精度</a></li>
+            <li><a href="#s2">表示</a></li>
+            <li><a href="#s3">費用と API</a></li>
+            <li><a href="#s4">アップデート・削除</a></li>
+        </ol>
+    </div>
+
+
+<h2 id="s1">選び方と精度</h2>
+
+<h3>どの選び方がいちばんよいですか？</h3>
+<p>多くのサイトでは <strong>「意味の近さで選ぶ（推奨）」</strong> で十分です。記事の本文まで比べるので精度が高く、結果が毎回同じで、費用もほとんどかかりません。GPT に最終判断させたい特別な理由がある場合だけ「意味の近さ＋GPT」を選んでください。</p>
+
+<h3>「意味の近さで選ぶ」のとき、GPT モデルの設定は関係ありますか？</h3>
+<p>関係ありません。GPT モデルは「意味の近さ＋GPT」「従来の方式」のときだけ使います。</p>
+
+<h3>Embedding モデルは large にしたほうがいいですか？</h3>
+<p>通常は <code>text-embedding-3-small</code> で十分です。large は料金が高く、ベクトルも大きくなります。変えると全記事のベクトルを作り直します。</p>
+
+<h3>タグやカテゴリを付けていない記事も選ばれますか？</h3>
+<p>「意味の近さで選ぶ」では本文の内容で比べるので選ばれます。「従来の方式」ではタグ・カテゴリ・文字の一致で候補を集めるため、付けていないと候補になりにくくなります。</p>
+
+<h2 id="s2">表示</h2>
+
+<h3>新しい記事に関連記事が出ません。</h3>
+<p>新しい記事は「この記事で関連記事を表示する」が OFF で始まります。記事の編集画面でチェックを入れて保存してください。</p>
+
+<h3>カスタム設定を変えたのに一部の記事に効きません。</h3>
+<p>記事に以前の設定値が保存されています。投稿タイプ別設定の赤い「すべて現在の設定値を反映」を押してください（<a href="priority.html">設定の優先順位と反映</a>）。</p>
+
+<h3>「すべて有効化」と「すべて現在の設定値を反映」の違いは？</h3>
+<p>「すべて有効化」は全記事の「関連記事を表示する」を ON にするだけです。「すべて現在の設定値を反映」は、全記事に保存された設定（範囲・件数・色など）を消して、今のカスタム設定・共通設定に合わせます。ON/OFF は変えません。</p>
+
+<h3>新しく公開した記事は、ほかの記事の関連記事にすぐ出ますか？</h3>
+<p>新しい記事のベクトルができたあと、ほかの記事のキャッシュが期限切れで選び直されたときに出ます。すぐ出したい場合は、キャッシュをクリアしてください。</p>
+
+<h2 id="s3">費用と API</h2>
+
+<h3>どのくらい費用がかかりますか？</h3>
+<p>「意味の近さで選ぶ」なら、記事のベクトルを作るときだけです（text-embedding-3-small で数百記事でも 1 円未満）。関連記事を選ぶたびの費用はかかりません。GPT を使う方式は、キャッシュを作るたびに GPT の料金がかかります（<a href="cache-cost.html">キャッシュと費用</a>）。</p>
+
+<h3>訪問者が増えると費用も増えますか？</h3>
+<p>増えません。訪問者がページを開いたときに OpenAI を呼ぶことはありません。関連記事はキャッシュを使い、GPT の選定もバックグラウンドで記事ごとに行います。</p>
+
+<h3>APIキーは安全に保存されますか？</h3>
+<p>データベースに暗号化して保存し、設定画面の HTML にも出しません。データベースに置きたくない場合は wp-config.php の定数で設定できます（<a href="reference.html">技術仕様・セキュリティ</a>）。</p>
+
+<h3>OpenRouter のキーは使えますか？</h3>
+<p>v1.0.4 で OpenRouter への対応をやめ、データベースに残っていた OpenRouter のキーも削除しました。OpenAI の APIキーを入れてください。</p>
+
+<h2 id="s4">アップデート・削除</h2>
+
+<h3>v1.0.3 からアップデートすると設定は引き継がれますか？</h3>
+<p>引き継がれます。OpenAI のキーは自動で暗号化し直し、関連記事の選び方は「意味の近さで選ぶ」になります。アップデート後に「未作成の記事をまとめて作成」でベクトルを作ってください（作り終えるまでは文字の一致の結果を表示します）。</p>
+
+<h3>プラグインを削除するとデータはどうなりますか？</h3>
+<p>無効化だけなら設定は残ります。管理画面から削除（アンインストール）すると、設定・記事ごとの設定・キャッシュ・ベクトル・API の記録をすべて削除します。</p>
+
+    <nav class="page-nav">
+        <a href="troubleshooting.html" class="prev">&laquo; トラブルシューティング</a>
+        <a href="reference.html" class="next">技術仕様・セキュリティ &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

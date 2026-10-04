@@ -99,8 +99,7 @@ class KashiwazakiSEORelatedPosts_Shortcode {
         $cached_timestamp = get_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_timestamp', true);
 
         // 設定からキャッシュ有効期限を取得
-        $plugin_options = get_option('kashiwazaki_seo_related_posts_options', array());
-        $cache_lifetime_hours = isset($plugin_options['cache_lifetime']) ? $plugin_options['cache_lifetime'] : 24;
+        $cache_lifetime_hours = max(1, absint(kashiwazaki_seo_related_posts_get_type_setting($post_id, 'cache_lifetime', 24)));
         $cache_lifetime = $cache_lifetime_hours * 60 * 60; // 時間を秒に変換
         $use_cache = false;
 
@@ -133,25 +132,9 @@ class KashiwazakiSEORelatedPosts_Shortcode {
             $related_posts = $this->related_posts->get_related_posts($post_id, $options);
 
             // 結果をキャッシュに保存（管理画面と同じ形式で保存）
-            if (!empty($related_posts)) {
-                $cache_data = array();
-                foreach ($related_posts as $related_post) {
-                    $post_obj = isset($related_post['post']) ? $related_post['post'] : get_post($related_post['post_id']);
-                    if ($post_obj) {
-                        $cache_data[] = array(
-                            'post_id' => $related_post['post_id'],
-                            'title' => $post_obj->post_title,
-                            'post_type' => $post_obj->post_type,
-                            'date' => date('Y-m-d', strtotime($post_obj->post_date)),
-                            'score' => isset($related_post['score']) ? $related_post['score'] : 0,
-                            'reason' => isset($related_post['reason']) ? $related_post['reason'] : ''
-                        );
-                    }
-                }
-
-                $timestamp = time();
-                update_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_results', $cache_data);
-                update_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_timestamp', $timestamp);
+            // API の失敗・ベクトル未作成・GPT の選定待ちで暫定の結果になったときは保存しない（次の表示で作り直す）
+            if (!empty($related_posts) && !$this->related_posts->is_last_result_degraded()) {
+                $this->related_posts->store_cache($post_id, $related_posts);
             }
         }
 
@@ -234,10 +217,7 @@ class KashiwazakiSEORelatedPosts_Shortcode {
         $heading_tag = $heading_tag ? $heading_tag : $default_heading_tag;
 
         // API分析は常時実行（APIキーが設定されている場合）
-        $openrouter_api_key = isset($options['openrouter_api_key']) ? $options['openrouter_api_key'] : '';
-        $openai_api_key = isset($options['openai_api_key']) ? $options['openai_api_key'] : '';
-        $legacy_api_key = isset($options['api_key']) ? $options['api_key'] : '';
-        $use_ai = !empty($openrouter_api_key) || !empty($openai_api_key) || !empty($legacy_api_key);
+        $use_ai = kashiwazaki_seo_related_posts_get_api_key() !== '';
 
         $template_map = array(
             'list' => 'list',
@@ -580,9 +560,8 @@ class KashiwazakiSEORelatedPosts_Shortcode {
 
     private function parse_boolean_or_auto($value) {
         if ($value === 'auto') {
-            $options = get_option('kashiwazaki_seo_related_posts_options', array());
-            $search_methods = isset($options['search_methods']) ? $options['search_methods'] : array();
-            return in_array('ai', $search_methods);
+            // 自動挿入と同じく、APIキーがあれば AI（関連記事の選び方の設定）を使う
+            return kashiwazaki_seo_related_posts_get_api_key() !== '';
         }
         return $this->parse_boolean($value);
     }

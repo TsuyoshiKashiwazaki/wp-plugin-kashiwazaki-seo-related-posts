@@ -6,10 +6,53 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
 
     private $similarity_calculator;
     private $api;
+    private $embeddings;
+    // 直近の結果が本来の方法で作れなかったか（API 失敗・ベクトル未作成の記事あり）。true ならキャッシュしない
+    private $last_result_degraded = false;
 
-    public function __construct($similarity_calculator, $api) {
+    // GPT の選定をバックグラウンドで行う単発の予約（WP-Cron）
+    const GPT_HOOK = 'kashiwazaki_seo_related_posts_gpt_select';
+    // 記事ごとに GPT を呼んでから次に呼ぶまで空ける時間の印（transient の接頭辞）
+    const GPT_WAIT_PREFIX = 'kashiwazaki_seo_related_posts_gpt_wait_';
+    // GPT がエラーを返したときにサイト全体で GPT を止める印
+    const GPT_BACKOFF = 'kashiwazaki_seo_related_posts_gpt_backoff';
+
+    public function __construct($similarity_calculator, $api, $embeddings = null) {
         $this->similarity_calculator = $similarity_calculator;
         $this->api = $api;
+        $this->embeddings = $embeddings;
+
+        add_action(self::GPT_HOOK, array($this, 'run_gpt_refresh'), 10, 2);
+    }
+
+    /**
+     * 直近の get_related_posts() の結果が暫定のもの（キャッシュすべきでない）か
+     */
+    public function is_last_result_degraded() {
+        return $this->last_result_degraded;
+    }
+
+    /**
+     * 関連記事の選び方: embedding / embedding_gpt / gpt
+     */
+    public function get_selection_mode() {
+        $options = get_option('kashiwazaki_seo_related_posts_options', array());
+        $mode = isset($options['selection_mode']) ? $options['selection_mode'] : 'embedding';
+        return in_array($mode, array('embedding', 'embedding_gpt', 'gpt'), true) ? $mode : 'embedding';
+    }
+
+    /**
+     * 結果に記録する「使ったモデル」
+     */
+    public function get_used_model_label() {
+        $options = get_option('kashiwazaki_seo_related_posts_options', array());
+        $chat_model = isset($options['openai_model']) && is_string($options['openai_model']) ? $options['openai_model'] : 'gpt-4o-mini';
+        $mode = $this->get_selection_mode();
+        if ($mode === 'gpt') {
+            return $chat_model;
+        }
+        $embedding_model = $this->embeddings ? $this->embeddings->get_model() : '';
+        return $mode === 'embedding_gpt' ? $embedding_model . ' + ' . $chat_model : $embedding_model;
     }
 
     public function get_related_posts($post_id, $options = array()) {
@@ -36,10 +79,29 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
             return array();
         }
 
+        $this->last_result_degraded = false;
         $is_ai_enabled = $this->is_ai_enabled();
 
         if ($options['use_ai'] && $is_ai_enabled) {
-            $result = $this->get_related_posts_with_ai($post_id, $options);
+            $mode = $this->get_selection_mode();
+            // GPT（有料）を呼んでよいのは、呼び出し元が allow_paid_api=true を渡したとき（管理者の操作・バックグラウンドの予約処理）だけ。
+            // 公開ページの表示（ショートコード・ウィジェット）では呼ばない
+            $needs_gpt = ($mode === 'gpt' || $mode === 'embedding_gpt' || !$this->embeddings);
+            $gpt_allowed = $needs_gpt && $this->may_call_gpt($options);
+
+            if ($mode !== 'gpt' && $this->embeddings) {
+                $result = $this->get_related_posts_with_embeddings($post_id, $options, $mode === 'embedding_gpt' && $gpt_allowed);
+            } elseif ($gpt_allowed) {
+                $result = $this->get_related_posts_with_ai($post_id, $options);
+            } else {
+                $result = $this->get_related_posts_by_similarity($post_id, $options);
+            }
+
+            if ($needs_gpt && !$gpt_allowed) {
+                // GPT で選ぶ設定なのに今は呼べない: 暫定の結果としてキャッシュせず、GPT の選定をバックグラウンドに予約する
+                $this->last_result_degraded = true;
+                $this->schedule_gpt_refresh($post_id, $options);
+            }
         } else {
             $result = $this->get_related_posts_by_similarity($post_id, $options);
         }
@@ -137,8 +199,7 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
         $pre_filtered_candidates = array();
 
         // AI分析用候補数追加設定を取得
-        $plugin_options = get_option('kashiwazaki_seo_related_posts_options', array());
-        $ai_candidate_buffer = isset($plugin_options['ai_candidate_buffer']) ? $plugin_options['ai_candidate_buffer'] : 20;
+        $ai_candidate_buffer = absint(kashiwazaki_seo_related_posts_get_type_setting($post_id, 'ai_candidate_buffer', 20));
         $ai_candidate_limit = $options['max_posts'] + $ai_candidate_buffer;
 
         if (count($candidate_posts) > $ai_candidate_limit) {
@@ -200,22 +261,8 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
             }
         }
 
-        // API設定を取得
-        $plugin_options = get_option('kashiwazaki_seo_related_posts_options', array());
-        $api_provider = isset($plugin_options['api_provider']) ? $plugin_options['api_provider'] : 'openrouter';
-
-        // API選択に基づいてAPIキーを取得
-        if ($api_provider === 'openrouter') {
-            $api_key = isset($plugin_options['openrouter_api_key']) ? $plugin_options['openrouter_api_key'] : '';
-            // 互換性のため、古いapi_keyも確認
-            if (empty($api_key) && isset($plugin_options['api_key'])) {
-                $api_key = $plugin_options['api_key'];
-            }
-            $model = isset($plugin_options['model']) ? $plugin_options['model'] : '';
-        } else {
-            $api_key = isset($plugin_options['openai_api_key']) ? $plugin_options['openai_api_key'] : '';
-            $model = 'gpt-4.1-nano'; // OpenAI GPTでは固定モデル
-        }
+        $api_key = kashiwazaki_seo_related_posts_get_api_key();
+        $model = ''; // 実際のモデルは API クラスが設定（openai_model）から決める
 
         if (empty($api_key)) {
             return $this->get_related_posts_by_similarity($post_id, $options);
@@ -234,6 +281,8 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
         );
 
         if (is_wp_error($ai_result)) {
+            $this->last_result_degraded = true;
+            $this->start_gpt_backoff();
             return $this->get_related_posts_by_similarity($post_id, $options);
         }
 
@@ -268,6 +317,202 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
         }
 
         return $related_posts;
+    }
+
+    /**
+     * embedding（意味の近さ）で関連記事を選ぶ。$use_gpt なら上位の候補から GPT が最終的に選ぶ
+     */
+    private function get_related_posts_with_embeddings($post_id, $options, $use_gpt) {
+        $max_posts = max(1, (int) $options['max_posts']);
+        $buffer = absint(kashiwazaki_seo_related_posts_get_type_setting($post_id, 'ai_candidate_buffer', 20));
+        $want = $use_gpt ? $max_posts + $buffer : $max_posts;
+
+        $found = $this->embeddings->find_similar_posts($post_id, $options, $want);
+        if (is_wp_error($found)) {
+            $this->last_result_degraded = true;
+            return $this->get_related_posts_by_similarity($post_id, $options);
+        }
+        if ($found['missing'] > 0) {
+            // ベクトル未作成の記事がある間は暫定結果（バックグラウンドで作成を予約済み）
+            $this->last_result_degraded = true;
+        }
+
+        $ranked = $found['results'];
+        $method = 'embedding';
+
+        // ベクトル未作成の記事がある間は GPT を呼ばない（結果が暫定でキャッシュされないため、呼ぶだけ無駄になる）
+        if ($use_gpt && $found['missing'] === 0 && count($ranked) > $max_posts) {
+            $api_key = kashiwazaki_seo_related_posts_get_api_key();
+            $candidate_posts_data = array();
+            foreach ($ranked as $item) {
+                $candidate_post = get_post($item['post_id']);
+                if ($candidate_post) {
+                    $candidate_posts_data[] = $this->extract_post_data($candidate_post);
+                }
+            }
+            $ai_result = $this->api->analyze_related_posts_with_ai(
+                $this->extract_post_data(get_post($post_id)),
+                $candidate_posts_data,
+                $api_key,
+                '',
+                $max_posts,
+                isset($options['search_methods']) ? $options['search_methods'] : null
+            );
+
+            if (is_wp_error($ai_result)) {
+                // GPT が使えないときは意味の近さの順で出す
+                $this->last_result_degraded = true;
+                $this->start_gpt_backoff();
+            } else {
+                $scores = array();
+                foreach ($ranked as $item) {
+                    $scores[$item['post_id']] = $item['score'];
+                }
+                $reordered = array();
+                foreach (array_unique(array_map('intval', $ai_result)) as $selected_id) {
+                    if (isset($scores[$selected_id])) {
+                        $reordered[] = array('post_id' => $selected_id, 'score' => $scores[$selected_id]);
+                    }
+                }
+                if (!empty($reordered)) {
+                    $ranked = $reordered;
+                    $method = 'embedding_gpt';
+                }
+            }
+        }
+
+        $related_posts = array();
+        $added = array();
+        foreach (array_slice($ranked, 0, $max_posts) as $item) {
+            $post = get_post($item['post_id']);
+            if (!$post) {
+                continue;
+            }
+            $related_posts[] = array(
+                'post_id' => $post->ID,
+                'score' => round($item['score'] * 100, 1),
+                'post' => $post,
+                'method' => $method
+            );
+            $added[$post->ID] = true;
+        }
+
+        // 足りない分は従来の文字一致で補う
+        if (count($related_posts) < $max_posts) {
+            foreach ($this->get_related_posts_by_similarity($post_id, $options) as $item) {
+                if (count($related_posts) >= $max_posts) {
+                    break;
+                }
+                if (isset($item['post_id']) && !isset($added[$item['post_id']])) {
+                    $item['method'] = 'similarity';
+                    $related_posts[] = $item;
+                    $added[$item['post_id']] = true;
+                }
+            }
+        }
+
+        return $related_posts;
+    }
+
+    /**
+     * GPT（有料）をいま呼んでよいか
+     */
+    private function may_call_gpt($options) {
+        return !empty($options['allow_paid_api']) && !get_transient(self::GPT_BACKOFF);
+    }
+
+    private function start_gpt_backoff() {
+        set_transient(self::GPT_BACKOFF, 1, 10 * MINUTE_IN_SECONDS);
+    }
+
+    /**
+     * 予約の引数に使う選択肢を、型と並び順をそろえて取り出す
+     * （wp_next_scheduled / wp_schedule_single_event は引数の md5(serialize()) で予約を見分けるため）
+     */
+    private function normalize_job_options($options) {
+        $ints = function ($values) {
+            $values = array_values(array_unique(array_map('intval', (array) $values)));
+            sort($values);
+            return $values;
+        };
+        $strings = function ($values) {
+            $values = array_values(array_unique(array_map('strval', (array) $values)));
+            sort($values);
+            return $values;
+        };
+
+        return array(
+            'max_posts' => max(1, min(20, (int) (isset($options['max_posts']) ? $options['max_posts'] : 5))),
+            'post_types' => $strings(isset($options['post_types']) ? $options['post_types'] : array('post')),
+            'filter_categories' => $ints(isset($options['filter_categories']) ? $options['filter_categories'] : array()),
+            'search_methods' => $strings(isset($options['search_methods']) ? $options['search_methods'] : array()),
+            'exclude_ids' => $ints(isset($options['exclude_ids']) ? $options['exclude_ids'] : array()),
+            'min_score' => (int) (isset($options['min_score']) ? $options['min_score'] : 25),
+        );
+    }
+
+    /**
+     * GPT の選定をバックグラウンドで行う予約を入れる。
+     * 記事ごとの印（GPT を呼んでから 10 分）とサイト全体の一時停止の印がある間は予約しない
+     */
+    private function schedule_gpt_refresh($post_id, $options) {
+        $post_id = (int) $post_id;
+        if ($post_id < 1 || get_transient(self::GPT_WAIT_PREFIX . $post_id) || get_transient(self::GPT_BACKOFF)) {
+            return;
+        }
+        $args = array($post_id, $this->normalize_job_options($options));
+        if (!wp_next_scheduled(self::GPT_HOOK, $args)) {
+            wp_schedule_single_event(time(), self::GPT_HOOK, $args);
+        }
+    }
+
+    /**
+     * WP-Cron: GPT で関連記事を選び、暫定でない結果をキャッシュに書く
+     */
+    public function run_gpt_refresh($post_id, $job_options = array()) {
+        $post_id = absint($post_id);
+        if (!$post_id || !get_post($post_id)) {
+            return;
+        }
+        // GPT を呼ぶ前に印を置く（失敗しても、この記事は 10 分間は呼ばない）
+        set_transient(self::GPT_WAIT_PREFIX . $post_id, 1, 10 * MINUTE_IN_SECONDS);
+
+        $options = $this->normalize_job_options(is_array($job_options) ? $job_options : array());
+        $options['use_ai'] = true;
+        $options['exclude_current'] = true;
+        $options['allow_paid_api'] = true;
+
+        $result = $this->get_related_posts($post_id, $options);
+        if (!empty($result) && !$this->last_result_degraded) {
+            $this->store_cache($post_id, $result);
+        }
+    }
+
+    /**
+     * 関連記事の結果をキャッシュ（投稿メタ）に保存する。ショートコード・バックグラウンドの予約処理で共通
+     */
+    public function store_cache($post_id, $related_posts) {
+        $cache_data = array();
+        foreach ($related_posts as $related_post) {
+            $post_obj = isset($related_post['post']) ? $related_post['post'] : get_post($related_post['post_id']);
+            if ($post_obj) {
+                $cache_data[] = array(
+                    'post_id' => $related_post['post_id'],
+                    'title' => $post_obj->post_title,
+                    'post_type' => $post_obj->post_type,
+                    'date' => date('Y-m-d', strtotime($post_obj->post_date)),
+                    'score' => isset($related_post['score']) ? $related_post['score'] : 0,
+                    'method' => isset($related_post['method']) ? $related_post['method'] : 'similarity',
+                    'reason' => isset($related_post['reason']) ? $related_post['reason'] : ''
+                );
+            }
+        }
+        if (empty($cache_data)) {
+            return;
+        }
+        update_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_results', $cache_data);
+        update_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_timestamp', time());
+        update_post_meta($post_id, '_kashiwazaki_seo_related_posts_used_model', $this->get_used_model_label());
     }
 
     /**
@@ -700,7 +945,10 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
 
     private function extract_post_data($post) {
         $categories = wp_get_post_categories($post->ID, array('fields' => 'names'));
-        $excerpt = !empty($post->post_excerpt) ? wp_trim_words($post->post_excerpt, 30) : wp_trim_words(strip_tags($post->post_content), 30);
+        // AI に渡す抜粋。日本語ロケールでは wp_trim_words() が「文字数」で切るため 30 だと 30 文字しか渡らない。文字数で 200 文字に揃える
+        $plain = !empty($post->post_excerpt) ? $post->post_excerpt : strip_shortcodes($post->post_content);
+        $plain = trim(preg_replace('/\s+/u', ' ', wp_strip_all_tags($plain)));
+        $excerpt = function_exists('mb_substr') ? mb_substr($plain, 0, 200, 'UTF-8') : substr($plain, 0, 600);
 
         $post_path = str_replace(home_url(), '', get_permalink($post->ID));
         $path_segments = array_filter(explode('/', trim($post_path, '/')));
@@ -718,24 +966,7 @@ class KashiwazakiSEORelatedPosts_RelatedPosts {
     }
 
     private function is_ai_enabled() {
-        $options = get_option('kashiwazaki_seo_related_posts_options', array());
-        $api_provider = isset($options['api_provider']) ? $options['api_provider'] : 'openrouter';
-
-        // API選択に基づいてAPIキーを取得
-        if ($api_provider === 'openrouter') {
-            $api_key = isset($options['openrouter_api_key']) ? $options['openrouter_api_key'] : '';
-            // 互換性のため、古いapi_keyも確認
-            if (empty($api_key) && isset($options['api_key'])) {
-                $api_key = $options['api_key'];
-            }
-        } else {
-            $api_key = isset($options['openai_api_key']) ? $options['openai_api_key'] : '';
-        }
-
-        $api_key_exists = !empty($api_key);
-
-
-        return $api_key_exists;
+        return kashiwazaki_seo_related_posts_get_api_key() !== '';
     }
 
     public function render_related_posts($post_id, $options = array()) {

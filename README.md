@@ -3,9 +3,9 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.3-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-related-posts/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.4-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-related-posts/releases)
 
-AI分析・3階層設定・API統計・一括操作で大規模サイトの関連記事を効率管理。OpenAI GPT対応、投稿タイプ別キャッシュ管理、詳細な個別記事設定が可能なエンタープライズ級SEOプラグイン。
+AI分析・3階層設定・API統計・一括操作で大規模サイトの関連記事を効率管理。OpenAI Embeddings（意味の近さ）・GPT対応、投稿タイプ別キャッシュ管理、詳細な個別記事設定が可能なエンタープライズ級SEOプラグイン。
 
 > エンタープライズ級の関連記事管理システム。3階層設定で柔軟な制御、API統計で完全監視。
 
@@ -37,17 +37,22 @@ AI分析・3階層設定・API統計・一括操作で大規模サイトの関�
 - レスポンシブスライダー（PC・タブレット・スマホ別設定）
 
 ### AI分析
-- OpenAI GPT-4o-mini/4o/4-turbo対応
-- タグ・カテゴリ・タイトル・抜粋・URLパス・投稿日を総合分析
+- OpenAI Embeddings（既定は text-embedding-3-small）で記事の意味の近さを比べて関連記事を選ぶ
+- 使える embedding モデルを OpenAI から自動取得（text-embedding-3-large や今後の新モデルにも対応）
+- 「意味の近さ」「意味の近さ＋GPT（GPT モデルも OpenAI から自動取得）」「従来の方式」から選択
+- APIキーは画面に表示せず、wp-config.php の定数でも設定可能
 - AIなしでも類似度計算のみで動作可能
 
 ## クイックスタート
 
 1. プラグインファイルを `/wp-content/plugins/kashiwazaki-seo-related-posts/` にアップロード
 2. WordPress管理画面の「プラグイン」で有効化
-3. 「関連記事AI」→「AIのAPI設定」でOpenAI APIキーを設定
+3. 「Kashiwazaki SEO Related Posts」→「AIのAPI設定」でOpenAI APIキーを設定し、「未作成の記事をまとめて作成」で記事のベクトルを作成
 4. 「共通設定」でサイト全体のデフォルト値を設定
-5. 必要に応じて「投稿タイプ別設定」で個別にカスタマイズ
+5. 「投稿タイプ別設定」で表示したい投稿タイプの「関連記事を表示」にチェックを入れ、「すべて有効化」で既存の記事を表示 ON に（新しい記事は編集画面で ON にします）
+6. 必要に応じて「投稿タイプ別設定」で個別にカスタマイズ
+
+詳しい使い方は [マニュアル](https://tsuyoshikashiwazaki.github.io/wp-plugin-kashiwazaki-seo-related-posts/) を参照してください。
 
 ## 使い方
 
@@ -80,7 +85,7 @@ AI分析・3階層設定・API統計・一括操作で大規模サイトの関�
 - **WordPress**: 5.0以上
 - **PHP**: 7.4以上
 - **ライセンス**: GPL-2.0-or-later
-- **AI API**: OpenAI GPT（APIキー必要）
+- **AI API**: OpenAI Embeddings / GPT（APIキー必要）
 
 ## 更新履歴
 

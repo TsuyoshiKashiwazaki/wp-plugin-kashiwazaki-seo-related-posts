@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共通設定 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li class="active"><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>共通設定</h1>
+    <p class="lead">「🌐 共通設定」タブでは、サイト全体の初期値を決めます。投稿タイプ別のカスタム設定や記事ごとの設定が無いところで、この値が使われます。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">関連記事の検索範囲（関連記事に選ぶ記事の範囲）</a></li>
+            <li><a href="#s2">件数とキャッシュ</a></li>
+            <li><a href="#s3">見た目と挿入位置</a></li>
+            <li><a href="#s4">保存とリセット</a></li>
+        </ol>
+    </div>
+
+
+<div class="callout callout-warning">
+    <div class="callout-title">変えても、保存済みの記事には効かないことがあります</div>
+    <p>記事を編集画面で保存すると、そのときの設定値が記事に残ります。共通設定を変えても、記事に残った値のほうが優先されます。変えた値を既存の記事に効かせる方法は「<a href="priority.html">設定の優先順位と反映</a>」を見てください。</p>
+</div>
+
+<h2 id="s1">関連記事の検索範囲（関連記事に選ぶ記事の範囲）</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/common-01-range.png" alt="関連記事の検索範囲" class="lightbox-trigger">
+</figure>
+
+<p>どの記事を関連記事の候補にするかを決めます。関連記事を<strong>表示するページ</strong>を決める設定ではありません（表示するかどうかは記事ごとの「この記事で関連記事を表示する」で決まります）。</p>
+
+<table>
+    <thead><tr><th style="width:25%;">項目</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>📄 投稿タイプ</td><td>チェックした投稿タイプの記事だけが候補になります。たとえば「ブログ」だけにチェックすると、関連記事欄にはブログの記事しか出ません。</td></tr>
+        <tr><td>📁 カテゴリ</td><td>チェックしたカテゴリの記事だけが候補になります。<strong>何もチェックしなければ全カテゴリ</strong>が対象です。</td></tr>
+        <tr><td>全チェック / 全解除 / リセット</td><td>チェックをまとめて入れる・外す・保存済みの状態に戻すボタンです（保存は「共通設定を保存」で行います）。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s2">件数とキャッシュ</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/common-02-numbers.png" alt="最大表示記事数・AI分析用候補数追加・キャッシュ有効期限" class="lightbox-trigger">
+</figure>
+
+<table>
+    <thead><tr><th style="width:25%;">項目</th><th>説明</th><th style="width:15%;">初期値</th></tr></thead>
+    <tbody>
+        <tr><td>📊 デフォルト最大表示記事数</td><td>1 つの記事に表示する関連記事の数です（1〜20）。</td><td>5</td></tr>
+        <tr><td>🤖 AI分析用候補数追加</td><td>GPT を使う方式で、GPT に渡す候補を表示件数より何件多くするかです。例：表示 5 件・この値 20 なら、25 件の候補から GPT が 5 件を選びます。<strong>「意味の近さで選ぶ」では使いません。</strong></td><td>20</td></tr>
+        <tr><td>💾 キャッシュ有効期限</td><td>選んだ関連記事を記事ごとに保存しておく時間です（1〜8,760 時間＝365 日）。期限が過ぎると、次にその記事が表示されたときに選び直します。「▶ 現在のキャッシュ情報」で、投稿タイプごとのキャッシュ数を確認できます。</td><td>24 時間</td></tr>
+    </tbody>
+</table>
+
+<figure class="screenshot">
+    <img src="images/screenshots/common-04-tooltip.png" alt="キャッシュ有効期限のツールチップ" class="lightbox-trigger">
+    <figcaption>「?」にマウスを乗せると説明が出ます</figcaption>
+</figure>
+
+<h2 id="s3">見た目と挿入位置</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/common-03-display.png" alt="表示形式・カラーテーマ・見出し・挿入位置・スライダー表示数" class="lightbox-trigger">
+</figure>
+
+<table>
+    <thead><tr><th style="width:25%;">項目</th><th>説明</th><th style="width:15%;">初期値</th></tr></thead>
+    <tbody>
+        <tr><td>🎨 デフォルト表示形式</td><td>リスト・グリッド・スライダーから選びます（見本は「<a href="display.html">表示形式とカラーテーマ</a>」）。</td><td>リスト</td></tr>
+        <tr><td>🎨 カラーテーマ</td><td>見出しの線やボタンの色です。ブルー・オレンジ・グリーン・パープル・レッド・ホワイトの 6 色。</td><td>ブルー</td></tr>
+        <tr><td>📝 関連記事見出し</td><td>関連記事欄の上に出す見出しの文字です。</td><td>関連記事</td></tr>
+        <tr><td>🏷️ 見出しタグ</td><td>見出しの HTML タグです（H2・H3・H4・DIV）。記事の見出しの階層に合わせて選びます。</td><td>H2</td></tr>
+        <tr><td>📍 デフォルト挿入位置</td><td>関連記事を本文のどこに自動で入れるかです。記事の前・記事の後・最初の段落の後。</td><td>記事の後</td></tr>
+        <tr><td>📱 スライダー表示数</td><td>表示形式がスライダーのとき、一度に見せる記事の数です（デスクトップ 1〜6、タブレット 1〜4、モバイル 1〜2）。</td><td>3 / 2 / 1</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s4">保存とリセット</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/common-05-buttons.png" alt="共通設定を保存と初期値にリセット" class="lightbox-trigger">
+</figure>
+
+<table>
+    <thead><tr><th style="width:25%;">ボタン</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>共通設定を保存</td><td>このタブの値を保存します。</td></tr>
+        <tr><td>初期値にリセット</td><td>このタブの値を初期値に戻します。APIキーと投稿タイプ別のカスタム設定はそのままです。</td></tr>
+    </tbody>
+</table>
+
+    <nav class="page-nav">
+        <a href="api-settings.html" class="prev">&laquo; AIのAPI設定</a>
+        <a href="post-type-settings.html" class="next">投稿タイプ別設定 &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

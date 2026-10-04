@@ -653,3 +653,122 @@ li {
         font-size: 1.3rem;
     }
 }
+
+/* ========================================
+   15. Manual v1.0.4 additions
+   ======================================== */
+
+.step-body {
+    flex: 1;
+    padding-top: 4px;
+}
+
+.step-body p:last-child {
+    margin-bottom: 0;
+}
+
+.content ul,
+.content ol {
+    margin: 0 0 16px 1.4em;
+}
+
+.content li {
+    margin-bottom: 6px;
+}
+
+/* Page table of contents */
+.page-toc {
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    padding: 14px 20px 6px;
+    margin: 0 0 32px;
+}
+
+.page-toc-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #50575e;
+    margin-bottom: 6px;
+}
+
+.page-toc ol {
+    margin: 0 0 8px 1.4em;
+    font-size: 14px;
+}
+
+.page-toc li {
+    margin-bottom: 2px;
+}
+
+/* Button samples (same colours as the admin screen) */
+.btn-sample {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.btn-blue { background: #2271b1; }
+.btn-green { background: #00a32a; }
+.btn-red { background: #d63638; }
+
+/* Colour theme samples */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.theme-grid figure {
+    margin: 0;
+    text-align: center;
+}
+
+.theme-grid img {
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    cursor: zoom-in;
+}
+
+.theme-grid figcaption {
+    font-size: 13px;
+    color: #646970;
+    margin-top: 4px;
+}
+
+.infographic img {
+    border-radius: 6px;
+    cursor: zoom-in;
+}
+
+table td code {
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .theme-grid {
+        grid-template-columns: 1fr;
+    }
+
+    table td code {
+        white-space: normal;
+        word-break: break-all;
+    }
+}
+
+.content p code,
+.callout code,
+.content li code {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+    .btn-sample {
+        white-space: normal;
+    }
+}

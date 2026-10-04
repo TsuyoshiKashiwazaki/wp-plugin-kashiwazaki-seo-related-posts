@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ショートコード・ウィジェット - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li class="active"><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>ショートコード・ウィジェット</h1>
+    <p class="lead">本文への自動挿入のほかに、ショートコードやウィジェットで好きな場所に関連記事を出せます。</p>
+
+
+<h2 id="s1">ショートコード</h2>
+
+<h3>基本の書き方</h3>
+<pre><code>[kashiwazaki_related_posts]</code></pre>
+<p>記事・固定ページの本文に書くと、その場所に関連記事を表示します。APIキーを設定していれば、自動挿入と同じく AI（「🤖 AIのAPI設定」タブの「関連記事の選び方」）で選びます。</p>
+
+<h3>パラメーター付き</h3>
+<pre><code>[kashiwazaki_related_posts max_posts="10" template="grid" title="おすすめ記事"]</code></pre>
+
+<table>
+    <thead><tr><th style="width:30%;">パラメーター</th><th>説明</th><th style="width:16%;">省略時</th></tr></thead>
+    <tbody>
+        <tr><td><code>max_posts</code></td><td>表示件数</td><td>5</td></tr>
+        <tr><td><code>template</code></td><td>表示形式。list / grid / slider / card / minimal</td><td>list</td></tr>
+        <tr><td><code>title</code></td><td>見出しの文字。省略すると見出しを出しません</td><td>なし</td></tr>
+        <tr><td><code>use_ai</code></td><td>AI で選ぶか。true / false / auto（auto は APIキーがあれば AI を使う）</td><td>auto</td></tr>
+        <tr><td><code>post_types</code></td><td>候補にする投稿タイプ（カンマ区切り）</td><td>post</td></tr>
+        <tr><td><code>search_methods</code></td><td>従来の方式・文字の一致で使う候補の集め方。tags / categories / directory / title / excerpt（カンマ区切り）</td><td>すべて</td></tr>
+        <tr><td><code>filter_categories</code></td><td>このカテゴリ ID の記事だけを候補にする（カンマ区切り）</td><td>全カテゴリ</td></tr>
+        <tr><td><code>exclude</code></td><td>候補から外す投稿 ID（カンマ区切り）</td><td>なし</td></tr>
+        <tr><td><code>post_id</code></td><td>関連記事を探す元の投稿 ID</td><td>表示中の投稿</td></tr>
+        <tr><td><code>show_excerpt</code> / <code>show_thumbnail</code> / <code>show_date</code></td><td>抜粋・サムネイル・日付を出すか（true / false）</td><td>true / true / false</td></tr>
+    </tbody>
+</table>
+
+<div class="callout callout-warning">
+    <div class="callout-title">パラメーターは、その記事のキャッシュが無いときに使われます</div>
+    <p>選んだ関連記事は記事ごとに 1 つだけ保存（キャッシュ）され、自動挿入・ショートコード・記事の編集画面の「関連記事を取得」で共通です。キャッシュが有効な間は、ショートコードの <code>max_posts</code>・<code>exclude</code>・<code>post_types</code>・<code>filter_categories</code>・<code>search_methods</code>・<code>use_ai</code> を書いても、保存済みの結果がそのまま表示されます。</p>
+    <ul>
+        <li>パラメーターを書いた・変えたあとは、キャッシュを消してください。その記事の編集画面の「キャッシュクリア」（関連記事の設定欄が出ている投稿タイプ）か、投稿タイプ別のカスタム設定画面の「この投稿タイプのキャッシュをクリア」で消せます。次に表示されたときに、ショートコードのパラメーターで選び直して保存します。</li>
+        <li>同じ記事で、自動挿入（「この記事で関連記事を表示する」が ON）とパラメーター付きのショートコードを併用しないでください。先に作られたほうの結果が両方に使われます。</li>
+        <li><code>template</code>・<code>title</code>・<code>show_excerpt</code>・<code>show_thumbnail</code>・<code>show_date</code>（見た目）はキャッシュに関係なく毎回効きます。</li>
+    </ul>
+</div>
+
+<div class="callout callout-note">
+    <div class="callout-title">カラーテーマはショートコードで指定しません</div>
+    <p>色は、記事ごとの設定 → 投稿タイプ別のカスタム設定 → 共通設定の順に決まります。</p>
+</div>
+
+<h3>テーマのテンプレートで使う</h3>
+<pre><code>&lt;?php echo do_shortcode('[kashiwazaki_related_posts]'); ?&gt;</code></pre>
+<p>single.php などに書くと、その位置に関連記事を出せます。自動挿入と二重に出ないよう、その記事の「この記事で関連記事を表示する」は OFF にしてください。</p>
+
+<h3>設定画面の「📚 使い方」タブ</h3>
+<p>設定画面の「📚 使い方」タブにも、セットアップの手順とショートコードの書き方が載っています。</p>
+
+<h2 id="s2">ウィジェット</h2>
+
+<p>「外観」→「ウィジェット」で「Kashiwazaki SEO Related Posts」を追加すると、サイドバーなどに関連記事を出せます（記事・固定ページを表示しているときに出ます）。</p>
+
+<table>
+    <thead><tr><th style="width:30%;">項目</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>タイトル</td><td>ウィジェットの見出しです。</td></tr>
+        <tr><td>表示記事数</td><td>表示する関連記事の数です。</td></tr>
+        <tr><td>投稿タイプ</td><td>候補にする投稿タイプです（カンマ区切り）。</td></tr>
+        <tr><td>AI分析を使用</td><td>チェックすると AI（関連記事の選び方の設定）で選びます。</td></tr>
+        <tr><td>サムネイル表示 / 抜粋表示 / 投稿日表示</td><td>それぞれ表示するかどうかです。</td></tr>
+    </tbody>
+</table>
+
+    <nav class="page-nav">
+        <a href="display.html" class="prev">&laquo; 表示形式とカラーテーマ</a>
+        <a href="cache-cost.html" class="next">キャッシュと費用 &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

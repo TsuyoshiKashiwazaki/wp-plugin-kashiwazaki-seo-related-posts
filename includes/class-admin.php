@@ -6,10 +6,12 @@ class KashiwazakiSEORelatedPosts_Admin {
 
     private $api;
     private $related_posts;
+    private $embeddings;
 
-    public function __construct($api, $related_posts) {
+    public function __construct($api, $related_posts, $embeddings) {
         $this->api = $api;
         $this->related_posts = $related_posts;
+        $this->embeddings = $embeddings;
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('add_meta_boxes', array($this, 'add_metabox'));
         add_action('save_post', array($this, 'save_metabox'));
@@ -92,6 +94,8 @@ class KashiwazakiSEORelatedPosts_Admin {
         // 保存処理
         if ($_POST && isset($_POST['save_api_settings'])) {
             $this->handle_save_api_settings();
+        } elseif ($_POST && isset($_POST['delete_api_key'])) {
+            $this->handle_delete_api_key();
         } elseif ($_POST && isset($_POST['save_common_settings'])) {
             $this->handle_save_common_settings();
         } elseif ($_POST && isset($_POST['reset_common_settings'])) {
@@ -110,7 +114,7 @@ class KashiwazakiSEORelatedPosts_Admin {
         $current_tab = isset($_GET['tab']) ? $_GET['tab'] : 'common';
 
         $options = get_option('kashiwazaki_seo_related_posts_options', array());
-        $api_key_set = !empty($options['openai_api_key']);
+        $api_key_set = kashiwazaki_seo_related_posts_get_api_key() !== '';
         $openai_model = isset($options['openai_model']) ? $options['openai_model'] : 'gpt-4o-mini';
         $search_methods = isset($options['search_methods']) ? $options['search_methods'] : array('tags', 'categories');
         $max_posts = isset($options['max_posts']) ? $options['max_posts'] : 5;
@@ -169,30 +173,34 @@ class KashiwazakiSEORelatedPosts_Admin {
         $test_message = '';
         $test_success = null;
 
-        // API設定の保存処理
-        if (isset($_POST['save_api_settings'])) {
-            $this->handle_save_api_settings();
-        } elseif (isset($_POST['test_api'])) {
-            $test_api_key = sanitize_text_field($_POST['api_key']);
-            $test_result = $this->api->test_api_key($test_api_key, 'openai');
-
-            if ($test_result['success']) {
-                $test_message = $test_result['message'];
-                $test_success = true;
-            } else {
-                $test_message = $test_result['message'];
-                $test_success = false;
+        // APIキーのテスト（保存処理は settings_page() 側で済んでいる）
+        if (isset($_POST['test_api'])) {
+            $test_api_key = isset($_POST['api_key']) ? trim(sanitize_text_field(wp_unslash($_POST['api_key']))) : '';
+            if ($test_api_key === '') {
+                $test_api_key = kashiwazaki_seo_related_posts_get_api_key();
             }
+            $test_result = $this->api->test_api_key($test_api_key);
+            $test_message = $test_result['message'];
+            $test_success = $test_result['success'];
         }
 
-        $openai_api_key = isset($options['openai_api_key']) ? $options['openai_api_key'] : '';
+        $options = get_option('kashiwazaki_seo_related_posts_options', array());
+        $api_key = kashiwazaki_seo_related_posts_get_api_key();
+        $key_from_constant = kashiwazaki_seo_related_posts_api_key_from_constant();
+        $masked_key = $api_key !== '' ? substr($api_key, 0, 3) . str_repeat('*', 8) . substr($api_key, -4) : '';
         $openai_model = isset($options['openai_model']) ? $options['openai_model'] : 'gpt-4o-mini';
+        $selection_mode = $this->related_posts->get_selection_mode();
+        $embedding_model = $this->embeddings->get_model();
+        $available = $this->embeddings->get_available_models();
+        $status = $this->embeddings->get_status();
+        $model_ids = wp_list_pluck($available['models'], 'id');
+        $chat_model_ids = wp_list_pluck($available['chat_models'], 'id');
         ?>
 
         <div style="background: #e7f4f9; border: 2px solid #0073aa; padding: 15px; margin: 20px 0; border-radius: 8px;">
             <h3 style="margin-top: 0;">💡 API設定について</h3>
-            <p>OpenAI GPT のAPIキーを設定し、使用するAIモデルを選択してください。</p>
-            <p>APIキーはAIによる関連記事の分析に必要です。</p>
+            <p>OpenAI のAPIキーを設定すると、記事の内容を数値（ベクトル）に変えて「意味の近さ」で関連記事を選びます（OpenAI Embeddings）。</p>
+            <p>ベクトルは記事を公開・更新したときに自動で作成し、記事ごとに保存します。</p>
         </div>
 
         <form method="post">
@@ -200,35 +208,123 @@ class KashiwazakiSEORelatedPosts_Admin {
             <input type="hidden" name="save_api_settings" value="1" />
             <table class="form-table">
                 <tr>
-                    <th scope="row"><label for="openai_api_key">🔑 OpenAI API キー</label></th>
+                    <th scope="row"><label for="openai_api_key">🔑 OpenAI API キー</label><?php echo $this->help_tip("OpenAI の APIキー（sk- で始まる文字列）です。関連記事を意味の近さで選ぶのに使います。\nデータベースには暗号化して保存し、画面には先頭と末尾の数文字だけを表示します。キーを変えるときだけ入力してください。"); ?></th>
                     <td>
-                        <div style="position: relative; display: inline-block; width: 100%; max-width: 25em;">
-                            <input type="password"
-                                   id="openai_api_key"
-                                   name="openai_api_key"
-                                   value="<?php echo esc_attr($openai_api_key); ?>"
-                                   class="regular-text"
-                                   style="padding-right: 40px; width: 100%;" />
-                            <button type="button"
-                                    id="toggle-api-key-visibility"
-                                    style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer; padding: 5px; font-size: 16px;"
-                                    title="表示/非表示を切り替え">
-                                <span class="dashicons dashicons-visibility" style="width: 20px; height: 20px;"></span>
-                            </button>
-                        </div>
-                        <p class="description"><a href="https://platform.openai.com/api-keys" target="_blank">OpenAI APIキーを取得</a></p>
+                        <?php if ($key_from_constant): ?>
+                            <p>wp-config.php の定数 <code>KASHIWAZAKI_SEO_RELATED_POSTS_OPENAI_API_KEY</code> で設定されています（<code><?php echo esc_html($masked_key); ?></code>）。</p>
+                        <?php else: ?>
+                            <?php if ($api_key !== ''): ?>
+                                <p>設定済み: <code><?php echo esc_html($masked_key); ?></code>（データベースには暗号化して保存しています）</p>
+                            <?php elseif (kashiwazaki_seo_related_posts_api_key_undecryptable()): ?>
+                                <p style="color: #d63638;">⚠️ 保存済みのAPIキーを復号できません（wp-config.php の認証用キー・ソルトが変わった可能性があります）。APIキーを入力し直してください。</p>
+                            <?php endif; ?>
+                            <div style="position: relative; display: inline-block; width: 100%; max-width: 25em;">
+                                <input type="password"
+                                       id="openai_api_key"
+                                       name="openai_api_key"
+                                       value=""
+                                       autocomplete="new-password"
+                                       placeholder="<?php echo esc_attr($api_key !== '' ? '変更するときだけ入力' : 'sk-...'); ?>"
+                                       class="regular-text"
+                                       style="padding-right: 40px; width: 100%;" />
+                                <button type="button"
+                                        id="toggle-api-key-visibility"
+                                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer; padding: 5px; font-size: 16px;"
+                                        title="表示/非表示を切り替え">
+                                    <span class="dashicons dashicons-visibility" style="width: 20px; height: 20px;"></span>
+                                </button>
+                            </div>
+                            <?php if ($api_key !== ''): ?>
+                                <p><button type="submit" form="kashiwazaki-delete-api-key-form" class="button button-link-delete" id="kashiwazaki-delete-api-key">保存済みのキーを削除</button></p>
+                            <?php endif; ?>
+                            <p class="description">
+                                保存済みのキーは画面に表示しません。空欄のまま保存すると今のキーをそのまま使います。<br>
+                                wp-config.php に <code>define('KASHIWAZAKI_SEO_RELATED_POSTS_OPENAI_API_KEY', 'sk-...');</code> と書くと、データベースに保存せずに使えます。<br>
+                                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">OpenAI APIキーを取得</a>
+                            </p>
+                        <?php endif; ?>
                     </td>
                 </tr>
 
                 <tr>
-                    <th scope="row">🤖 AIモデル</th>
+                    <th scope="row">🧭 関連記事の選び方<?php echo $this->help_tip("意味の近さで選ぶ: 記事の内容を数値（ベクトル）にして、内容の近い記事を選びます。費用はほとんどかかりません。\n意味の近さ＋GPT: 内容の近い記事を候補にして、GPT が最終的に選びます。選ぶたびに GPT の料金がかかります。\n従来の方式: タグ・カテゴリ・文字の一致で候補を集め、GPT が選びます。"); ?></th>
                     <td>
-                        <select name="openai_model">
-                            <option value="gpt-4o-mini" <?php selected($openai_model, 'gpt-4o-mini'); ?>>gpt-4o-mini（推奨・最も低コスト）</option>
-                            <option value="gpt-4o" <?php selected($openai_model, 'gpt-4o'); ?>>gpt-4o（バランス型）</option>
-                            <option value="gpt-4-turbo" <?php selected($openai_model, 'gpt-4-turbo'); ?>>gpt-4-turbo（高性能）</option>
+                        <fieldset>
+                            <label style="display: block; margin-bottom: 6px;">
+                                <input type="radio" name="selection_mode" value="embedding" <?php checked($selection_mode, 'embedding'); ?> />
+                                <strong>意味の近さで選ぶ（推奨）</strong> - Embeddings だけを使います。結果が毎回同じで、費用もほとんどかかりません
+                            </label>
+                            <label style="display: block; margin-bottom: 6px;">
+                                <input type="radio" name="selection_mode" value="embedding_gpt" <?php checked($selection_mode, 'embedding_gpt'); ?> />
+                                <strong>意味の近さで候補を絞り、GPT が最終的に選ぶ</strong> - 関連記事を作るたびに GPT も呼び出します
+                            </label>
+                            <label style="display: block;">
+                                <input type="radio" name="selection_mode" value="gpt" <?php checked($selection_mode, 'gpt'); ?> />
+                                <strong>従来の方式</strong> - タグ・カテゴリ・文字の一致で候補を集め、GPT が選びます
+                            </label>
+                        </fieldset>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><label for="embedding_model">🧠 Embedding モデル</label><?php echo $this->help_tip("記事を数値（ベクトル）に変える OpenAI のモデルです。通常は text-embedding-3-small のままで十分です。\nモデルを変えると、すべての記事のベクトルを作り直します。"); ?></th>
+                    <td>
+                        <select name="embedding_model" id="embedding_model">
+                            <?php if (!in_array($embedding_model, $model_ids, true)): ?>
+                                <option value="<?php echo esc_attr($embedding_model); ?>" selected><?php echo esc_html($embedding_model); ?></option>
+                            <?php endif; ?>
+                            <?php foreach ($available['models'] as $model_item): ?>
+                                <option value="<?php echo esc_attr($model_item['id']); ?>" <?php selected($embedding_model, $model_item['id']); ?>>
+                                    <?php echo esc_html($model_item['id'] . ($model_item['id'] === KashiwazakiSEORelatedPosts_Embeddings::DEFAULT_MODEL ? '（推奨）' : '') . (!empty($model_item['shutdown_date']) ? '（' . $model_item['shutdown_date'] . ' 提供終了予定）' : '')); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
-                        <p class="description">使用するAIモデルを選択してください。</p>
+                        <button type="button" class="button kashiwazaki-refresh-models">OpenAI から最新の一覧を取得</button>
+                        <span class="kashiwazaki-refresh-models-status" style="margin-left: 8px;"></span>
+                        <p class="description">
+                            一覧は OpenAI から自動で取得します（1日1回）。新しい embedding モデルが出ると、ここに表示されます。
+                            <?php if ($available['fetched_at']): ?>
+                                最終取得: <?php echo esc_html(KashiwazakiSEORelatedPosts_Embeddings::format_time($available['fetched_at'])); ?>
+                            <?php endif; ?>
+                            <br>モデルを変えると、すべての記事のベクトルを作り直します（違うモデルどうしのベクトルは比べられないため）。
+                        </p>
+                        <?php if ($available['error'] !== ''): ?>
+                            <p style="color: #d63638;">⚠️ モデル一覧を取得できませんでした: <?php echo esc_html($available['error']); ?></p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><label for="openai_model">🤖 GPT モデル</label><?php echo $this->help_tip("「意味の近さ＋GPT」「従来の方式」で関連記事を選ぶモデルです。「意味の近さで選ぶ」では使いません。\n保存するときに 1 回だけ試しに呼び出し、使えないモデルは保存しません。"); ?></th>
+                    <td>
+                        <select name="openai_model" id="openai_model">
+                            <?php if (!in_array($openai_model, $chat_model_ids, true)): ?>
+                                <option value="<?php echo esc_attr($openai_model); ?>" selected><?php echo esc_html($openai_model); ?></option>
+                            <?php endif; ?>
+                            <?php foreach ($available['chat_models'] as $model_item): ?>
+                                <option value="<?php echo esc_attr($model_item['id']); ?>" <?php selected($openai_model, $model_item['id']); ?>>
+                                    <?php echo esc_html($model_item['id'] . (!empty($model_item['shutdown_date']) ? '（' . $model_item['shutdown_date'] . ' 提供終了予定）' : '')); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="button" class="button kashiwazaki-refresh-models">OpenAI から最新の一覧を取得</button>
+                        <span class="kashiwazaki-refresh-models-status" style="margin-left: 8px;"></span>
+                        <p class="description">
+                            「GPT が最終的に選ぶ」「従来の方式」で使います。一覧は OpenAI から自動で取得します（1日1回）。<br>
+                            モデルを変えて保存するときに、そのモデルを 1 回だけ試しに呼び出して、使えるか確かめます（使えないモデルは保存しません）。
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">📦 ベクトルの作成状況<?php echo $this->help_tip("今のモデルで作成済みの記事数 / 対象の公開記事数です。記事を公開・更新すると自動で作られます。\n「未作成の記事をまとめて作成」で、まだの記事をすぐに作れます。"); ?></th>
+                    <td>
+                        <p id="kashiwazaki-embedding-status">
+                            <?php echo esc_html(sprintf('%d / %d 件 作成済み（モデル: %s）', $status['embedded'], $status['total'], $status['model'])); ?>
+                        </p>
+                        <button type="button" class="button" id="kashiwazaki-embed-backfill" <?php disabled($api_key === ''); ?>>未作成の記事をまとめて作成</button>
+                        <span id="kashiwazaki-embed-backfill-status" style="margin-left: 8px;"></span>
+                        <p class="description">記事を公開・更新すると自動で作成します。導入直後やモデルを変えた直後は、このボタンでまとめて作成できます（バックグラウンドでも順に作成されます）。</p>
                     </td>
                 </tr>
             </table>
@@ -238,6 +334,95 @@ class KashiwazakiSEORelatedPosts_Admin {
             </p>
         </form>
 
+        <?php if (!$key_from_constant && $api_key !== ''): ?>
+            <!-- 保存済みのキーの削除（上のフォームの「保存済みのキーを削除」ボタンが form 属性でこのフォームを送る） -->
+            <form method="post" id="kashiwazaki-delete-api-key-form">
+                <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
+                <input type="hidden" name="delete_api_key" value="1" />
+            </form>
+        <?php endif; ?>
+
+        <script>
+        jQuery(function ($) {
+            var nonce = <?php echo wp_json_encode(wp_create_nonce('kashiwazaki_embedding_admin')); ?>;
+
+            $('#kashiwazaki-delete-api-key-form').on('submit', function () {
+                return window.confirm('保存済みの OpenAI APIキーを削除します。削除すると AI を使った関連記事の選定が止まり、文字の一致で選ぶようになります。よろしいですか？');
+            });
+
+            function fillSelect($select, models) {
+                var current = $select.val();
+                $select.empty();
+                $.each(models, function (i, model) {
+                    $('<option>').val(model.id).text(model.id + (model.shutdown_date ? '（' + model.shutdown_date + ' 提供終了予定）' : '')).appendTo($select);
+                });
+                if (current && $select.find('option').filter(function () { return this.value === current; }).length === 0) {
+                    $('<option>').val(current).text(current).prependTo($select);
+                }
+                $select.val(current);
+            }
+
+            $('.kashiwazaki-refresh-models').on('click', function () {
+                var $buttons = $('.kashiwazaki-refresh-models');
+                var $status = $(this).siblings('.kashiwazaki-refresh-models-status');
+                $('.kashiwazaki-refresh-models-status').text('');
+                $buttons.prop('disabled', true);
+                $status.text('取得中...');
+                $.post(ajaxurl, { action: 'kashiwazaki_refresh_embedding_models', nonce: nonce })
+                    .done(function (response) {
+                        if (!response || !response.success) {
+                            $status.text('取得できませんでした: ' + (response && response.data && response.data.message ? response.data.message : '不明なエラー'));
+                            return;
+                        }
+                        fillSelect($('#embedding_model'), response.data.models);
+                        fillSelect($('#openai_model'), response.data.chat_models);
+                        $status.text('embedding ' + response.data.models.length + ' 件・GPT ' + response.data.chat_models.length + ' 件を取得しました（' + response.data.fetched_at + '）');
+                    })
+                    .fail(function () {
+                        $status.text('通信に失敗しました');
+                    })
+                    .always(function () {
+                        $buttons.prop('disabled', false);
+                    });
+            });
+
+            $('#kashiwazaki-embed-backfill').on('click', function () {
+                var $button = $(this);
+                var $status = $('#kashiwazaki-embed-backfill-status');
+                var created = 0;
+                $button.prop('disabled', true);
+
+                function step() {
+                    $status.text('作成中...（今回 ' + created + ' 件）');
+                    $.post(ajaxurl, { action: 'kashiwazaki_embedding_backfill', nonce: nonce })
+                        .done(function (response) {
+                            var data = response && response.data ? response.data : {};
+                            if (data.status) {
+                                $('#kashiwazaki-embedding-status').text(data.status.embedded + ' / ' + data.status.total + ' 件 作成済み（モデル: ' + data.status.model + '）');
+                            }
+                            if (!response || !response.success) {
+                                $status.text('止まりました: ' + (data.message || '不明なエラー'));
+                                $button.prop('disabled', false);
+                                return;
+                            }
+                            created += data.created;
+                            if (data.done) {
+                                $status.text('完了しました（今回 ' + created + ' 件）');
+                                $button.prop('disabled', false);
+                                return;
+                            }
+                            step();
+                        })
+                        .fail(function () {
+                            $status.text('通信に失敗しました');
+                            $button.prop('disabled', false);
+                        });
+                }
+                step();
+            });
+        });
+        </script>
+
         <hr />
 
         <h3>🧪 APIキーテスト</h3>
@@ -246,10 +431,10 @@ class KashiwazakiSEORelatedPosts_Admin {
             <input type="hidden" name="test_api" value="1" />
             <table class="form-table">
                 <tr>
-                    <th scope="row"><label for="test_api_key">テスト用APIキー</label></th>
+                    <th scope="row"><label for="test_api_key">テスト用APIキー</label><?php echo $this->help_tip("入力したキー（空欄なら保存済みのキー）で OpenAI のモデル一覧を取得し、キーが使えるか確かめます。料金はかかりません。"); ?></th>
                     <td>
-                        <input type="text" id="test_api_key" name="api_key" class="regular-text" />
-                        <p class="description">テストしたいOpenAI APIキーを入力してください。</p>
+                        <input type="password" id="test_api_key" name="api_key" class="regular-text" autocomplete="off" placeholder="空欄なら保存済みのキーを確認" />
+                        <p class="description">OpenAI のモデル一覧を取得してキーが有効か確認します（料金はかかりません）。</p>
                     </td>
                 </tr>
             </table>
@@ -265,247 +450,86 @@ class KashiwazakiSEORelatedPosts_Admin {
 
         <hr />
 
-        <h3>📊 API呼び出し統計</h3>
+        <h3>📊 API呼び出し統計<?php echo $this->help_tip("OpenAI を呼んだ回数です。GPT は関連記事を選んだ回数、Embedding は記事のベクトルを作った回数（最大 20 記事分を 1 回にまとめます）。\nモデル一覧の取得・APIキーのテストは数えません。"); ?></h3>
+        <?php
+        $stat_kinds = array(
+            'gpt' => 'GPT（関連記事の選定）',
+            'embedding' => 'Embedding（記事のベクトル作成）',
+        );
+        $stat_logs = array();
+        foreach ($stat_kinds as $kind => $label) {
+            $success_logs = get_option(KashiwazakiSEORelatedPosts_API::log_option($kind, 'success'), array());
+            $failure_logs = get_option(KashiwazakiSEORelatedPosts_API::log_option($kind, 'failure'), array());
+            $stat_logs[$kind] = array(
+                'success' => is_array($success_logs) ? $success_logs : array(),
+                'failure' => is_array($failure_logs) ? $failure_logs : array(),
+            );
+            $this->render_api_stats_table($label, $stat_logs[$kind]['success'], $stat_logs[$kind]['failure']);
+        }
+        ?>
+        <p class="description" style="margin-top: 10px;">
+            GPT は「GPT が最終的に選ぶ」「従来の方式」で関連記事を選んだ回数、Embedding は記事のベクトルを作った回数です（最大 20 記事分を 1 回にまとめて作ります）。モデル一覧の取得・APIキーのテスト・GPT モデルの保存時の確認は数えません。<br>
+            v1.0.3 までは区別せずに記録していたため、それ以前の記録は GPT 側に入っています。ログは自動的に1年以上経過したものから削除され、それぞれ最大 10,000 件まで残します。
+        </p>
+
+        <h3 style="margin-top: 30px;">📈 直近30日間の推移<?php echo $this->help_tip("今日を含む直近 30 日間の、1 日ごとの呼び出し回数です（実線: GPT、破線: Embedding）。"); ?></h3>
         <div style="background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 4px;">
             <?php
-            // API呼び出しログを取得
-            $api_logs = get_option('kashiwazaki_seo_related_posts_api_logs', array());
-            $api_failure_logs = get_option('kashiwazaki_seo_related_posts_api_failure_logs', array());
-            $now = time();
-
-            // 期間ごとのカウント（成功）
-            $counts = array(
-                '24h' => 0,
-                '1w' => 0,
-                '1m' => 0,
-                '3m' => 0,
-                '1y' => 0,
-                'all' => count($api_logs)
-            );
-
-            foreach ($api_logs as $timestamp) {
-                $age = $now - $timestamp;
-                if ($age <= 86400) $counts['24h']++; // 24時間
-                if ($age <= 604800) $counts['1w']++; // 1週間
-                if ($age <= 2592000) $counts['1m']++; // 30日
-                if ($age <= 7776000) $counts['3m']++; // 90日
-                if ($age <= 31536000) $counts['1y']++; // 365日
-            }
-
-            // 期間ごとのカウント（失敗）
-            $failure_counts = array(
-                '24h' => 0,
-                '1w' => 0,
-                '1m' => 0,
-                '3m' => 0,
-                '1y' => 0,
-                'all' => count($api_failure_logs)
-            );
-
-            foreach ($api_failure_logs as $timestamp) {
-                $age = $now - $timestamp;
-                if ($age <= 86400) $failure_counts['24h']++; // 24時間
-                if ($age <= 604800) $failure_counts['1w']++; // 1週間
-                if ($age <= 2592000) $failure_counts['1m']++; // 30日
-                if ($age <= 7776000) $failure_counts['3m']++; // 90日
-                if ($age <= 31536000) $failure_counts['1y']++; // 365日
-            }
-            ?>
-            <table class="widefat" style="margin-top: 10px;">
-                <thead>
-                    <tr>
-                        <th>期間</th>
-                        <th style="text-align: right;">成功</th>
-                        <th style="text-align: right;">失敗</th>
-                        <th style="text-align: right;">合計</th>
-                        <th style="text-align: right;">成功率</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr style="background: #f9f9f9;">
-                        <td><strong>直近24時間</strong></td>
-                        <td style="text-align: right; color: #00a32a;"><strong><?php echo number_format($counts['24h']); ?></strong></td>
-                        <td style="text-align: right; color: #d63638;"><strong><?php echo number_format($failure_counts['24h']); ?></strong></td>
-                        <td style="text-align: right;"><strong><?php echo number_format($counts['24h'] + $failure_counts['24h']); ?></strong></td>
-                        <td style="text-align: right;">
-                            <?php
-                            $total = $counts['24h'] + $failure_counts['24h'];
-                            echo $total > 0 ? number_format($counts['24h'] / $total * 100, 1) . '%' : '-';
-                            ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>直近1週間</strong></td>
-                        <td style="text-align: right; color: #00a32a;"><strong><?php echo number_format($counts['1w']); ?></strong></td>
-                        <td style="text-align: right; color: #d63638;"><strong><?php echo number_format($failure_counts['1w']); ?></strong></td>
-                        <td style="text-align: right;"><strong><?php echo number_format($counts['1w'] + $failure_counts['1w']); ?></strong></td>
-                        <td style="text-align: right;">
-                            <?php
-                            $total = $counts['1w'] + $failure_counts['1w'];
-                            echo $total > 0 ? number_format($counts['1w'] / $total * 100, 1) . '%' : '-';
-                            ?>
-                        </td>
-                    </tr>
-                    <tr style="background: #f9f9f9;">
-                        <td><strong>直近1ヶ月</strong></td>
-                        <td style="text-align: right; color: #00a32a;"><strong><?php echo number_format($counts['1m']); ?></strong></td>
-                        <td style="text-align: right; color: #d63638;"><strong><?php echo number_format($failure_counts['1m']); ?></strong></td>
-                        <td style="text-align: right;"><strong><?php echo number_format($counts['1m'] + $failure_counts['1m']); ?></strong></td>
-                        <td style="text-align: right;">
-                            <?php
-                            $total = $counts['1m'] + $failure_counts['1m'];
-                            echo $total > 0 ? number_format($counts['1m'] / $total * 100, 1) . '%' : '-';
-                            ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>直近3ヶ月</strong></td>
-                        <td style="text-align: right; color: #00a32a;"><strong><?php echo number_format($counts['3m']); ?></strong></td>
-                        <td style="text-align: right; color: #d63638;"><strong><?php echo number_format($failure_counts['3m']); ?></strong></td>
-                        <td style="text-align: right;"><strong><?php echo number_format($counts['3m'] + $failure_counts['3m']); ?></strong></td>
-                        <td style="text-align: right;">
-                            <?php
-                            $total = $counts['3m'] + $failure_counts['3m'];
-                            echo $total > 0 ? number_format($counts['3m'] / $total * 100, 1) . '%' : '-';
-                            ?>
-                        </td>
-                    </tr>
-                    <tr style="background: #f9f9f9;">
-                        <td><strong>直近1年</strong></td>
-                        <td style="text-align: right; color: #00a32a;"><strong><?php echo number_format($counts['1y']); ?></strong></td>
-                        <td style="text-align: right; color: #d63638;"><strong><?php echo number_format($failure_counts['1y']); ?></strong></td>
-                        <td style="text-align: right;"><strong><?php echo number_format($counts['1y'] + $failure_counts['1y']); ?></strong></td>
-                        <td style="text-align: right;">
-                            <?php
-                            $total = $counts['1y'] + $failure_counts['1y'];
-                            echo $total > 0 ? number_format($counts['1y'] / $total * 100, 1) . '%' : '-';
-                            ?>
-                        </td>
-                    </tr>
-                    <tr style="background: #e7f4f9; font-weight: bold;">
-                        <td><strong>すべて</strong></td>
-                        <td style="text-align: right; color: #00a32a;"><strong><?php echo number_format($counts['all']); ?></strong></td>
-                        <td style="text-align: right; color: #d63638;"><strong><?php echo number_format($failure_counts['all']); ?></strong></td>
-                        <td style="text-align: right;"><strong><?php echo number_format($counts['all'] + $failure_counts['all']); ?></strong></td>
-                        <td style="text-align: right;">
-                            <?php
-                            $total = $counts['all'] + $failure_counts['all'];
-                            echo $total > 0 ? number_format($counts['all'] / $total * 100, 1) . '%' : '-';
-                            ?>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p class="description" style="margin-top: 10px;">
-                AI分析機能を使用した際のAPI呼び出し回数を集計しています。<br>
-                ログは自動的に1年以上経過したものから削除されます。
-            </p>
-        </div>
-
-        <h3 style="margin-top: 30px;">📈 直近30日間の推移</h3>
-        <div style="background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 4px;">
-            <?php
-            // 直近30日間の日別カウント（成功）
-            $daily_counts = array();
-            $thirty_days_ago = strtotime('-30 days', strtotime('today'));
-
+            // 今日を含む直近 30 日 (29 日前〜今日)
+            $first_day = strtotime('-29 days', strtotime('today'));
+            $chart_dates = array();
             for ($i = 0; $i < 30; $i++) {
-                $date = date('Y-m-d', strtotime("+$i days", $thirty_days_ago));
-                $daily_counts[$date] = 0;
+                $chart_dates[] = date('Y-m-d', strtotime("+$i days", $first_day));
             }
-
-            foreach ($api_logs as $timestamp) {
-                $date = date('Y-m-d', $timestamp);
-                if (isset($daily_counts[$date])) {
-                    $daily_counts[$date]++;
+            $chart_series = array();
+            foreach (array('gpt', 'embedding') as $kind) {
+                foreach (array('success', 'failure') as $type) {
+                    $daily = array_fill_keys($chart_dates, 0);
+                    foreach ($stat_logs[$kind][$type] as $timestamp) {
+                        $date = date('Y-m-d', (int) $timestamp);
+                        if (isset($daily[$date])) {
+                            $daily[$date]++;
+                        }
+                    }
+                    $chart_series[$kind . '_' . $type] = array_values($daily);
                 }
             }
-
-            // 直近30日間の日別カウント（失敗）
-            $daily_failure_counts = array();
-            for ($i = 0; $i < 30; $i++) {
-                $date = date('Y-m-d', strtotime("+$i days", $thirty_days_ago));
-                $daily_failure_counts[$date] = 0;
-            }
-
-            foreach ($api_failure_logs as $timestamp) {
-                $date = date('Y-m-d', $timestamp);
-                if (isset($daily_failure_counts[$date])) {
-                    $daily_failure_counts[$date]++;
-                }
-            }
-
-            $dates = array_keys($daily_counts);
-            $counts_data = array_values($daily_counts);
-            $failure_counts_data = array_values($daily_failure_counts);
             ?>
 
             <canvas id="api-usage-chart" style="max-height: 300px;"></canvas>
 
-            <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
             <script>
-            var ctx = document.getElementById('api-usage-chart').getContext('2d');
-            var chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: <?php echo json_encode(array_map(function($date) {
-                        return date('m/d', strtotime($date));
-                    }, $dates)); ?>,
-                    datasets: [
-                        {
-                            label: '成功',
-                            data: <?php echo json_encode($counts_data); ?>,
-                            borderColor: '#00a32a',
-                            backgroundColor: 'rgba(0, 163, 42, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: '失敗',
-                            data: <?php echo json_encode($failure_counts_data); ?>,
-                            borderColor: '#d63638',
-                            backgroundColor: 'rgba(214, 54, 56, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
+            (function () {
+                var series = <?php echo wp_json_encode($chart_series); ?>;
+                var ctx = document.getElementById('api-usage-chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: <?php echo wp_json_encode(array_map(function ($date) { return date('m/d', strtotime($date)); }, $chart_dates)); ?>,
+                        datasets: [
+                            { label: 'GPT 成功', data: series.gpt_success, borderColor: '#00a32a', backgroundColor: 'rgba(0, 163, 42, 0.1)', borderWidth: 2, fill: false, tension: 0.4 },
+                            { label: 'GPT 失敗', data: series.gpt_failure, borderColor: '#d63638', backgroundColor: 'rgba(214, 54, 56, 0.1)', borderWidth: 2, fill: false, tension: 0.4 },
+                            { label: 'Embedding 成功', data: series.embedding_success, borderColor: '#2271b1', backgroundColor: 'rgba(34, 113, 177, 0.1)', borderWidth: 2, borderDash: [6, 4], fill: false, tension: 0.4 },
+                            { label: 'Embedding 失敗', data: series.embedding_failure, borderColor: '#dba617', backgroundColor: 'rgba(219, 166, 23, 0.1)', borderWidth: 2, borderDash: [6, 4], fill: false, tension: 0.4 }
+                        ]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: true, position: 'top' },
+                            tooltip: { mode: 'index', intersect: false }
                         },
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                            x: { ticks: { maxRotation: 45, minRotation: 45 } }
                         }
                     }
-                }
-            });
+                });
+            })();
             </script>
             <p class="description" style="margin-top: 10px;">
-                直近30日間の日別API呼び出し回数（成功/失敗）を表示しています。<br>
-                <span style="color: #00a32a;">■</span> <strong>緑色:</strong> API呼び出し成功
-                <span style="color: #d63638;">■</span> <strong>赤色:</strong> API呼び出し失敗
+                直近30日間の日別API呼び出し回数を、GPT と Embedding に分けて表示しています（実線: GPT、破線: Embedding）。
             </p>
         </div>
 
@@ -527,6 +551,75 @@ class KashiwazakiSEORelatedPosts_Admin {
             });
         });
         </script>
+        <?php
+    }
+
+    /**
+     * API 呼び出し統計の表 (期間ごとの成功・失敗・合計・成功率)
+     */
+    /**
+     * 「?」アイコンのツールチップ（マウスを乗せる・キーボードで選ぶと説明が出る）
+     *
+     * @param string $text  説明文（改行は \n）
+     * @param string $align 吹き出しを寄せる向き（left: 右へ伸びる / right: 左へ伸びる）
+     */
+    private function help_tip($text, $align = 'left') {
+        $class = 'kashiwazaki-help' . ($align === 'right' ? ' kashiwazaki-help--right' : '');
+        return '<span class="' . esc_attr($class) . '" tabindex="0" role="note" aria-label="' . esc_attr($text) . '" data-tip="' . esc_attr($text) . '">?</span>';
+    }
+
+    private function render_api_stats_table($label, $success_logs, $failure_logs) {
+        $now = time();
+        $periods = array(
+            '24h' => array('直近24時間', 86400),
+            '1w' => array('直近1週間', 604800),
+            '1m' => array('直近1ヶ月', 2592000),
+            '3m' => array('直近3ヶ月', 7776000),
+            '1y' => array('直近1年', 31536000),
+        );
+        $count = function ($logs, $seconds) use ($now) {
+            $n = 0;
+            foreach ($logs as $timestamp) {
+                if ($now - (int) $timestamp <= $seconds) {
+                    $n++;
+                }
+            }
+            return $n;
+        };
+        $rows = array();
+        foreach ($periods as $key => $period) {
+            $rows[] = array($period[0], $count($success_logs, $period[1]), $count($failure_logs, $period[1]), false);
+        }
+        $rows[] = array('すべて', count($success_logs), count($failure_logs), true);
+        ?>
+        <h4 style="margin: 20px 0 6px;"><?php echo esc_html($label); ?></h4>
+        <div style="background: #fff; border: 1px solid #ddd; padding: 12px 20px; border-radius: 4px;">
+            <table class="widefat">
+                <thead>
+                    <tr>
+                        <th>期間</th>
+                        <th style="text-align: right;">成功</th>
+                        <th style="text-align: right;">失敗</th>
+                        <th style="text-align: right;">合計</th>
+                        <th style="text-align: right;">成功率</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($rows as $i => $row):
+                        $total = $row[1] + $row[2];
+                        $style = $row[3] ? 'background: #e7f4f9; font-weight: bold;' : ($i % 2 === 0 ? 'background: #f9f9f9;' : '');
+                    ?>
+                        <tr style="<?php echo esc_attr($style); ?>">
+                            <td><strong><?php echo esc_html($row[0]); ?></strong></td>
+                            <td style="text-align: right; color: #00a32a;"><strong><?php echo esc_html(number_format($row[1])); ?></strong></td>
+                            <td style="text-align: right; color: #d63638;"><strong><?php echo esc_html(number_format($row[2])); ?></strong></td>
+                            <td style="text-align: right;"><strong><?php echo esc_html(number_format($total)); ?></strong></td>
+                            <td style="text-align: right;"><?php echo esc_html($total > 0 ? number_format($row[1] / $total * 100, 1) . '%' : '-'); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
         <?php
     }
 
@@ -559,7 +652,7 @@ class KashiwazakiSEORelatedPosts_Admin {
             <input type="hidden" name="save_common_settings" value="1" />
             <table class="form-table">
                 <tr>
-                    <th scope="row">🔍 関連記事の検索範囲</th>
+                    <th scope="row">🔍 関連記事の検索範囲<?php echo $this->help_tip("チェックした投稿タイプ・カテゴリの記事だけが、関連記事として表示される候補になります。\n関連記事を出すページ（どの記事の下に出すか）は、この設定では決まりません。\n記事ごとに保存された「対象投稿タイプ」があれば、そちらが優先されます。"); ?></th>
                     <td>
                         <!-- 投稿タイプの選択 -->
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
@@ -633,7 +726,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                 </tr>
 
                 <tr>
-                    <th scope="row"><label for="max_posts">📊 デフォルト最大表示記事数</label></th>
+                    <th scope="row"><label for="max_posts">📊 デフォルト最大表示記事数</label><?php echo $this->help_tip("1 つの記事に表示する関連記事の数です（1〜20）。\n投稿タイプ別のカスタム設定や、記事ごとの設定があればそちらが優先されます。"); ?></th>
                     <td>
                         <input type="number" id="max_posts" name="max_posts" value="<?php echo esc_attr($max_posts); ?>" min="1" max="20" style="width: 80px;" />
                         <p class="description">すべての投稿タイプで使用されるデフォルトの最大表示記事数です。</p>
@@ -641,7 +734,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                 </tr>
 
                 <tr>
-                    <th scope="row"><label for="ai_candidate_buffer">🤖 AI分析用候補数追加</label></th>
+                    <th scope="row"><label for="ai_candidate_buffer">🤖 AI分析用候補数追加</label><?php echo $this->help_tip("GPT を使う方式（意味の近さ＋GPT・従来の方式）で、GPT に渡す候補を表示件数より何件多くするかです。\n例: 表示 5 件・この値 20 なら、25 件の候補から GPT が 5 件を選びます。「意味の近さで選ぶ」では使いません。"); ?></th>
                     <td>
                         <input type="number" id="ai_candidate_buffer" name="ai_candidate_buffer" value="<?php echo esc_attr($ai_candidate_buffer); ?>" min="5" max="100" style="width: 80px;" /> 件
                         <p class="description">AIで分析する候補記事数を増やします。例：最大表示5件の場合、5+この値（20）=25件の候補からAIが最適な5件を選びます。</p>
@@ -649,7 +742,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                 </tr>
 
                 <tr>
-                    <th scope="row"><label for="cache_lifetime">💾 キャッシュ有効期限</label></th>
+                    <th scope="row"><label for="cache_lifetime">💾 キャッシュ有効期限</label><?php echo $this->help_tip("選んだ関連記事を記事ごとに保存しておく時間です（1〜8760 時間）。期限が過ぎると、次にその記事が表示されたときに選び直します。\n短くすると新しい記事が早く反映され、長くすると選び直しの回数が減ります。"); ?></th>
                     <td>
                         <input type="number" id="cache_lifetime" name="cache_lifetime" value="<?php echo esc_attr($cache_lifetime); ?>" min="1" max="8760" style="width: 100px;" /> 時間
                         <p class="description">関連記事キャッシュの有効期限です。最大8760時間（365日）まで設定可能です。</p>
@@ -752,7 +845,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                 </tr>
 
                 <tr>
-                    <th scope="row">🎨 デフォルト表示形式</th>
+                    <th scope="row">🎨 デフォルト表示形式<?php echo $this->help_tip("リスト: 縦に 1 列で並べます。\nグリッド: カードを格子状に並べます。\nスライダー: 横にスライドさせて見せます（一度に見せる数は「スライダー表示数」）。"); ?></th>
                     <td>
                         <fieldset>
                             <label><input type="radio" name="display_method" value="list" <?php checked($display_method, 'list'); ?> /> リスト</label><br/>
@@ -763,7 +856,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                 </tr>
 
                 <tr>
-                    <th scope="row">🎨 カラーテーマ</th>
+                    <th scope="row">🎨 カラーテーマ<?php echo $this->help_tip("関連記事欄の見出しやボタンの色です。"); ?></th>
                     <td>
                         <fieldset>
                             <label><input type="radio" name="color_theme" value="blue" <?php checked($color_theme, 'blue'); ?> /> <span style="color: #007cba;">■</span> ブルー</label><br/>
@@ -777,14 +870,14 @@ class KashiwazakiSEORelatedPosts_Admin {
                 </tr>
 
                 <tr>
-                    <th scope="row"><label for="heading_text">📝 関連記事見出し</label></th>
+                    <th scope="row"><label for="heading_text">📝 関連記事見出し</label><?php echo $this->help_tip("関連記事欄の上に出す見出しの文字です（例: 関連記事）。"); ?></th>
                     <td>
                         <input type="text" id="heading_text" name="heading_text" value="<?php echo esc_attr(isset($options['heading_text']) ? $options['heading_text'] : '関連記事'); ?>" class="regular-text" />
                     </td>
                 </tr>
 
                 <tr>
-                    <th scope="row"><label for="heading_tag">🏷️ 見出しタグ</label></th>
+                    <th scope="row"><label for="heading_tag">🏷️ 見出しタグ</label><?php echo $this->help_tip("見出しに使う HTML タグです。記事の見出しの階層に合わせて選びます（通常は H2）。"); ?></th>
                     <td>
                         <select id="heading_tag" name="heading_tag">
                             <?php
@@ -799,13 +892,21 @@ class KashiwazakiSEORelatedPosts_Admin {
                 </tr>
 
                 <tr>
-                    <th scope="row"><label for="insert_position">📍 デフォルト挿入位置</label></th>
+                    <th scope="row"><label for="insert_position">📍 デフォルト挿入位置</label><?php echo $this->help_tip("関連記事を本文のどこに自動で入れるかです。記事の前・記事の後・最初の段落の後から選びます。"); ?></th>
                     <td>
                         <select id="insert_position" name="insert_position">
                             <option value="before_content" <?php selected($insert_position, 'before_content'); ?>>記事の前</option>
                             <option value="after_content" <?php selected($insert_position, 'after_content'); ?>>記事の後</option>
                             <option value="after_first_paragraph" <?php selected($insert_position, 'after_first_paragraph'); ?>>最初の段落の後</option>
                         </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">📱 スライダー表示数<?php echo $this->help_tip("表示形式がスライダーのとき、一度に見せる記事の数です（デスクトップ 1〜6、タブレット 1〜4、モバイル 1〜2）。"); ?></th>
+                    <td>
+                        <label>デスクトップ: <input type="number" name="slider_items_desktop" value="<?php echo esc_attr($slider_items_desktop); ?>" min="1" max="6" style="width: 60px;" /></label><br/>
+                        <label>タブレット: <input type="number" name="slider_items_tablet" value="<?php echo esc_attr($slider_items_tablet); ?>" min="1" max="4" style="width: 60px;" /></label><br/>
+                        <label>モバイル: <input type="number" name="slider_items_mobile" value="<?php echo esc_attr($slider_items_mobile); ?>" min="1" max="2" style="width: 60px;" /></label>
                     </td>
                 </tr>
             </table>
@@ -824,7 +925,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                 <form method="post" style="margin: 0;">
                     <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
                     <input type="hidden" name="reset_common_settings" value="1" />
-                    <input type="submit" class="button button-secondary" value="初期値にリセット" onclick="return confirm('共通設定を初期値にリセットしますか？');" />
+                    <input type="submit" class="button button-secondary" value="初期値にリセット" onclick="return confirm('共通設定を初期値にリセットしますか？');" /><?php echo $this->help_tip("共通設定タブの値を初期値に戻します。APIキーと投稿タイプ別のカスタム設定はそのままです。"); ?>
                 </form>
             </div>
         <?php
@@ -832,19 +933,19 @@ class KashiwazakiSEORelatedPosts_Admin {
 
     // 使い方タブのレンダリング
     private function render_guide_tab($options) {
-        $api_key_set = !empty($options['openai_api_key']);
+        $api_key_set = kashiwazaki_seo_related_posts_get_api_key() !== '';
 
         $settings_count = count(array_filter($options, function($value, $key) {
-            return !in_array($key, array('api_key', 'openrouter_api_key', 'openai_api_key', 'api_provider')) && !empty($value);
+            return $key !== 'openai_api_key' && !empty($value);
         }, ARRAY_FILTER_USE_BOTH));
         ?>
         <div style="background: #f0f8ff; border: 2px solid #0073aa; padding: 20px; margin: 20px 0; border-radius: 8px;">
             <h2>📋 プラグイン概要</h2>
-            <p>タグ、カテゴリ、ディレクトリ構造、タイトル、抜粋からAIを使って関連記事を表示するSEOツールです。</p>
+            <p>記事の内容の意味の近さ（OpenAI Embeddings）や、タグ・カテゴリ・ディレクトリ構造・タイトル・抜粋から関連記事を選んで表示するSEOツールです。</p>
 
             <h3>🚀 セットアップガイド</h3>
             <ol>
-                <li><strong><a href="<?php echo admin_url('admin.php?page=kashiwazaki-seo-related-posts-settings&tab=api'); ?>">API設定</a></strong> - OpenAI GPT のAPIキーを設定</li>
+                <li><strong><a href="<?php echo admin_url('admin.php?page=kashiwazaki-seo-related-posts-settings&tab=api'); ?>">API設定</a></strong> - OpenAI のAPIキーと関連記事の選び方を設定</li>
                 <li><strong><a href="<?php echo admin_url('admin.php?page=kashiwazaki-seo-related-posts-settings&tab=common'); ?>">共通設定</a></strong> - 検索方法、表示設定、自動挿入設定を行う</li>
                 <li><strong><a href="<?php echo admin_url('admin.php?page=kashiwazaki-seo-related-posts-settings&tab=post_types'); ?>">投稿タイプ別設定</a></strong> - 投稿タイプごとの個別設定（オプション）</li>
             </ol>
@@ -885,7 +986,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
                     <tr>
                         <td style="border: 1px solid #ddd; padding: 8px;"><code>use_ai</code></td>
-                        <td style="border: 1px solid #ddd; padding: 8px;">AI分析使用（true/false/auto）</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">AI で選ぶか（true/false/auto。auto は APIキーがあれば使う）</td>
                         <td style="border: 1px solid #ddd; padding: 8px;">auto</td>
                     </tr>
                     <tr>
@@ -895,6 +996,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
                 </tbody>
             </table>
+            <p class="description">選んだ関連記事は記事ごとに 1 つだけ保存（キャッシュ）され、自動挿入と共通です。キャッシュが有効な間は max_posts などの選び方のパラメーターを書いても保存済みの結果が表示されるので、パラメーターを変えたらその記事のキャッシュを消してください。同じ記事で自動挿入と併用しないでください。</p>
 
             <h4>🔹 使用例</h4>
             <div style="background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0;">
@@ -908,7 +1010,7 @@ class KashiwazakiSEORelatedPosts_Admin {
             <form method="post">
                 <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
                 <input type="hidden" name="reset_all_settings" value="1" />
-                <input type="submit" class="button button-link-delete" value="全設定をリセット" onclick="return confirm('本当に全ての設定を削除しますか？この操作は取り消せません。');" />
+                <input type="submit" class="button button-link-delete" value="全設定をリセット" onclick="return confirm('本当に全ての設定を削除しますか？この操作は取り消せません。');" /><?php echo $this->help_tip("すべての設定を初期値に戻します。APIキー、投稿タイプ別のカスタム設定、全記事の「関連記事を表示」の ON/OFF・記事ごとの設定・キャッシュ・記事のベクトルも消えます。取り消せません。"); ?>
             </form>
         </div>
         <?php
@@ -921,6 +1023,8 @@ class KashiwazakiSEORelatedPosts_Admin {
             <h3 style="margin-top: 0;">投稿タイプ別設定について</h3>
             <p>各投稿タイプごとに「関連記事を表示」のチェックボックスで、編集画面にメタボックスを表示するかどうかを設定できます。</p>
             <p>また、「共通設定を使う」または「カスタム設定」を選択できます。カスタム設定では、最大表示記事数、表示形式、カラーテーマなどを個別に設定できます。</p>
+            <p><strong>設定の優先順位:</strong> 記事ごとの設定（編集画面の関連記事の設定欄） &gt; 投稿タイプ別のカスタム設定 &gt; 共通設定。<br>
+            記事を編集画面で保存すると、そのときの設定値が記事ごとに保存されます。あとからカスタム設定や共通設定を変えても、保存済みの記事には効きません。変えた設定を既存の記事に効かせるには「すべて現在の設定値を反映」を押してください。</p>
         </div>
 
         <div style="margin: 15px 0;">
@@ -948,10 +1052,10 @@ class KashiwazakiSEORelatedPosts_Admin {
                 <thead>
                     <tr>
                         <th>投稿タイプ</th>
-                        <th style="text-align: center;">キャッシュ / 記事数</th>
-                        <th style="text-align: center;">関連記事を表示</th>
-                        <th>設定状態</th>
-                        <th>操作</th>
+                        <th style="text-align: center;">キャッシュ / 記事数<?php echo $this->help_tip("関連記事を作り終えて保存してある記事の数 / 公開中の記事の数です。\nキャッシュは記事が表示されたときに作られ、有効期限が過ぎると次の表示で作り直されます。"); ?></th>
+                        <th style="text-align: center;">関連記事を表示<?php echo $this->help_tip("チェックすると、この投稿タイプの編集画面に関連記事の設定欄が出ます。\n実際に記事に関連記事を出すかは、記事ごとの「この記事で関連記事を表示する」で決まります（まとめて ON にするには「すべて有効化」）。"); ?></th>
+                        <th>設定状態<?php echo $this->help_tip("カスタム設定: この投稿タイプ専用の設定を使います。\n共通設定を使用: 共通設定タブの値を使います。\nどちらも、記事ごとに保存された設定があればそちらが優先されます。"); ?></th>
+                        <th>操作<?php echo $this->help_tip("設定を編集: この投稿タイプのカスタム設定を開きます。\nすべて有効化: この投稿タイプの全記事で「この記事で関連記事を表示する」を ON にします（ほかの設定は変えません）。\nすべて現在の設定値を反映: 記事ごとに保存された設定を消し、全記事をこの投稿タイプの現在の設定に合わせます。\nボタンは「関連記事を表示」にチェックが入っている投稿タイプにだけ出ます。", 'right'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1007,10 +1111,12 @@ class KashiwazakiSEORelatedPosts_Admin {
                             <?php endif; ?>
                         </td>
                         <td>
+                            <?php // 操作ボタンは「関連記事を表示」にチェックが入っている投稿タイプだけに出す（チェックを変えるとすぐ切り替わる） ?>
+                            <span class="kashiwazaki-pt-actions" data-post-type="<?php echo esc_attr($post_type->name); ?>"<?php echo in_array($post_type->name, $metabox_post_types) ? '' : ' style="display: none;"'; ?>>
                             <a href="<?php echo admin_url('admin.php?page=kashiwazaki-seo-related-posts-settings-post-type&post_type=' . esc_attr($post_type->name)); ?>" class="button button-primary button-small">
                                 <?php echo $use_custom_settings ? '設定を編集' : 'カスタム設定を作成'; ?>
                             </a>
-                            <?php if (in_array($post_type->name, $metabox_post_types) && $published_count > 0): ?>
+                            <?php if ($published_count > 0): ?>
                                 <button type="button"
                                         class="button button-small kashiwazaki-enable-all-posts"
                                         data-post-type="<?php echo esc_attr($post_type->name); ?>"
@@ -1019,6 +1125,16 @@ class KashiwazakiSEORelatedPosts_Admin {
                                     すべて有効化
                                 </button>
                             <?php endif; ?>
+                            <?php if ($published_count > 0): ?>
+                                <button type="button"
+                                        class="button button-small kashiwazaki-apply-defaults-all-posts"
+                                        data-post-type="<?php echo esc_attr($post_type->name); ?>"
+                                        data-post-type-label="<?php echo esc_attr($post_type->label); ?>"
+                                        style="margin-left: 5px; background: #d63638; color: white; border-color: #d63638;">
+                                    すべて現在の設定値を反映
+                                </button>
+                            <?php endif; ?>
+                            </span>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -1100,16 +1216,54 @@ class KashiwazakiSEORelatedPosts_Admin {
                 });
             });
 
+            // すべて現在の設定値を反映ボタンの処理（記事ごとに保存された設定を消して、投稿タイプの現在の設定に合わせる）
+            $('.kashiwazaki-apply-defaults-all-posts').on('click', function() {
+                var $button = $(this);
+                var postType = $button.data('post-type');
+                var postTypeLabel = $button.data('post-type-label');
+                var originalText = $button.text();
+
+                if (!confirm('「' + postTypeLabel + '」のすべての記事で、記事ごとに保存されている関連記事の設定（対象投稿タイプ・表示件数・表示形式・カラーテーマ・見出しなど）を消し、この投稿タイプの現在の設定に合わせますか？\n\n「この記事で関連記事を表示する」の ON/OFF はそのままです。関連記事のキャッシュも消え、次に記事が表示されたときに作り直されます。\n\nこの操作は取り消せません。')) {
+                    return;
+                }
+
+                $button.prop('disabled', true).text('処理中...');
+
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'kashiwazaki_reset_all_posts_to_defaults',
+                        post_type: postType,
+                        nonce: kashiwazaki_related_posts_ajax.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('成功: ' + response.data.message);
+                            location.reload();
+                        } else {
+                            alert('エラー: ' + response.data);
+                        }
+                    },
+                    error: function() {
+                        alert('通信エラーが発生しました。');
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text(originalText);
+                    }
+                });
+            });
+
             // チェックボックスの変更を監視して、ボタンの表示を動的に変更
             $('.metabox-post-type-checkbox').on('change', function() {
                 var $checkbox = $(this);
                 var postType = $checkbox.data('post-type');
-                var $button = $('.kashiwazaki-enable-all-posts[data-post-type="' + postType + '"]');
+                var $actions = $('.kashiwazaki-pt-actions[data-post-type="' + postType + '"]');
 
                 if ($checkbox.is(':checked')) {
-                    $button.show();
+                    $actions.show();
                 } else {
-                    $button.hide();
+                    $actions.hide();
                 }
             });
         });
@@ -1117,20 +1271,99 @@ class KashiwazakiSEORelatedPosts_Admin {
         <?php
     }
 
+    // 保存済みの APIキーの削除（確認ダイアログ付きの「削除」ボタンから）
+    public function handle_delete_api_key() {
+        if (kashiwazaki_seo_related_posts_api_key_from_constant()) {
+            echo '<div class="notice notice-warning"><p>APIキーは wp-config.php の定数で設定されているため、この画面からは削除できません。</p></div>';
+            return;
+        }
+        $options = get_option('kashiwazaki_seo_related_posts_options', array());
+        if (!is_array($options)) {
+            $options = array();
+        }
+        unset($options['openai_api_key']);
+        update_option('kashiwazaki_seo_related_posts_options', $options);
+        echo '<div class="notice notice-success"><p>保存済みの OpenAI APIキーを削除しました。</p></div>';
+    }
+
     // API設定の保存処理
     public function handle_save_api_settings() {
+        global $wpdb;
+
         $options = get_option('kashiwazaki_seo_related_posts_options', array());
+        if (!is_array($options)) {
+            $options = array();
+        }
+        $old_mode = $this->related_posts->get_selection_mode();
+        $old_embedding_model = $this->embeddings->get_model();
 
-        // OpenAI APIキー
-        $options['openai_api_key'] = isset($_POST['openai_api_key']) ? sanitize_text_field($_POST['openai_api_key']) : '';
+        // OpenAI APIキー（空欄なら変更しない。wp-config.php の定数で設定されているときは保存しない）
+        $new_key = '';
+        if (!kashiwazaki_seo_related_posts_api_key_from_constant()) {
+            $new_key = isset($_POST['openai_api_key']) ? trim(sanitize_text_field(wp_unslash($_POST['openai_api_key']))) : '';
+            if ($new_key !== '') {
+                // データベースには暗号化して保存する（暗号化できなければ保存しない）
+                $encrypted = kashiwazaki_seo_related_posts_encrypt_secret($new_key);
+                if (is_wp_error($encrypted)) {
+                    echo '<div class="notice notice-error"><p>' . esc_html($encrypted->get_error_message()) . '</p></div>';
+                    $new_key = '';
+                } else {
+                    $options['openai_api_key'] = $encrypted;
+                }
+            }
+        }
 
-        // OpenAI モデル設定
-        $options['openai_model'] = isset($_POST['openai_model']) ? sanitize_text_field($_POST['openai_model']) : 'gpt-4o-mini';
+        // GPT モデル（OpenAI から取得した一覧にあり、試しに呼び出して使えたものだけ。変えていなければ確かめない）
+        $current_chat_model = (isset($options['openai_model']) && KashiwazakiSEORelatedPosts_Embeddings::is_valid_model_id($options['openai_model'])) ? $options['openai_model'] : 'gpt-4o-mini';
+        $chat_model = isset($_POST['openai_model']) ? sanitize_text_field(wp_unslash($_POST['openai_model'])) : $current_chat_model;
+        $options['openai_model'] = $current_chat_model;
+        if ($chat_model !== $current_chat_model) {
+            $effective_key = $new_key !== '' ? $new_key : kashiwazaki_seo_related_posts_get_api_key();
+            if (!KashiwazakiSEORelatedPosts_Embeddings::is_valid_model_id($chat_model) || !$this->embeddings->is_known_chat_model($chat_model)) {
+                echo '<div class="notice notice-error"><p>' . esc_html('GPT モデル「' . $chat_model . '」は OpenAI の一覧にないため保存しませんでした。') . '</p></div>';
+            } elseif ($effective_key === '') {
+                echo '<div class="notice notice-error"><p>GPT モデルを変えるには OpenAI APIキーが必要です（試しに呼び出して使えるか確かめるため）。</p></div>';
+            } else {
+                $tested = $this->api->test_chat_model($effective_key, $chat_model);
+                if (is_wp_error($tested)) {
+                    echo '<div class="notice notice-error"><p>' . esc_html('GPT モデル「' . $chat_model . '」は関連記事の選定に使えなかったため保存しませんでした（' . $tested->get_error_message() . '）。') . '</p></div>';
+                } else {
+                    $options['openai_model'] = $chat_model;
+                }
+            }
+        }
 
-        // APIプロバイダーは常にOpenAI
-        $options['api_provider'] = 'openai';
+        // 関連記事の選び方
+        $mode = isset($_POST['selection_mode']) ? sanitize_key(wp_unslash($_POST['selection_mode'])) : 'embedding';
+        $options['selection_mode'] = in_array($mode, array('embedding', 'embedding_gpt', 'gpt'), true) ? $mode : 'embedding';
+
+        // Embedding モデル（OpenAI から取得した一覧にあるものだけ）
+        $embedding_model = isset($_POST['embedding_model']) ? sanitize_text_field(wp_unslash($_POST['embedding_model'])) : '';
+        if (KashiwazakiSEORelatedPosts_Embeddings::is_valid_model_id($embedding_model) && $this->embeddings->is_known_model($embedding_model)) {
+            $options['embedding_model'] = $embedding_model;
+        } elseif (!isset($options['embedding_model'])) {
+            $options['embedding_model'] = KashiwazakiSEORelatedPosts_Embeddings::DEFAULT_MODEL;
+        }
+
+        // OpenRouter 時代の設定は持たない
+        foreach (array('openrouter_api_key', 'api_key', 'api_provider', 'model') as $legacy_key) {
+            unset($options[$legacy_key]);
+        }
 
         update_option('kashiwazaki_seo_related_posts_options', $options);
+
+        // 選び方・モデルが変わったら、古い方法で作った関連記事のキャッシュを消す
+        if ($old_mode !== $options['selection_mode'] || $old_embedding_model !== $options['embedding_model']) {
+            $wpdb->query(
+                "DELETE FROM {$wpdb->postmeta}
+                 WHERE meta_key IN ('_kashiwazaki_seo_related_posts_cached_results', '_kashiwazaki_seo_related_posts_cached_timestamp', '_kashiwazaki_seo_related_posts_used_model')"
+            );
+        }
+
+        if ($this->embeddings->is_enabled()) {
+            $this->embeddings->schedule_backfill();
+        }
+
         echo '<div class="notice notice-success"><p>API設定を保存しました。</p></div>';
     }
 
@@ -1163,6 +1396,9 @@ class KashiwazakiSEORelatedPosts_Admin {
         $options['filter_categories'] = isset($_POST['filter_categories']) && is_array($_POST['filter_categories']) ? array_map('intval', $_POST['filter_categories']) : array();
         $options['heading_text'] = isset($_POST['heading_text']) ? sanitize_text_field($_POST['heading_text']) : $defaults['heading_text'];
         $options['heading_tag'] = isset($_POST['heading_tag']) ? kashiwazaki_seo_related_posts_sanitize_heading_tag($_POST['heading_tag']) : $defaults['heading_tag'];
+        $options['slider_items_desktop'] = isset($_POST['slider_items_desktop']) ? max(1, min(6, absint($_POST['slider_items_desktop']))) : $defaults['slider_items_desktop'];
+        $options['slider_items_tablet'] = isset($_POST['slider_items_tablet']) ? max(1, min(4, absint($_POST['slider_items_tablet']))) : $defaults['slider_items_tablet'];
+        $options['slider_items_mobile'] = isset($_POST['slider_items_mobile']) ? max(1, min(2, absint($_POST['slider_items_mobile']))) : $defaults['slider_items_mobile'];
 
         update_option('kashiwazaki_seo_related_posts_options', $options);
 
@@ -1253,8 +1489,10 @@ class KashiwazakiSEORelatedPosts_Admin {
         if (isset($current_options['openai_api_key'])) {
             $preserved['openai_api_key'] = $current_options['openai_api_key'];
         }
-        if (isset($current_options['openai_model'])) {
-            $preserved['openai_model'] = $current_options['openai_model'];
+        foreach (array('openai_model', 'selection_mode', 'embedding_model') as $preserved_key) {
+            if (isset($current_options[$preserved_key])) {
+                $preserved[$preserved_key] = $current_options[$preserved_key];
+            }
         }
 
         // 投稿タイプ別設定を保持
@@ -1448,7 +1686,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
                 <table class="form-table">
                     <tr>
-                        <th scope="row">⚙️ 設定モード</th>
+                        <th scope="row">⚙️ 設定モード<?php echo $this->help_tip("共通設定を使用: 共通設定タブの値を使います。\nこの投稿タイプ専用の設定を使用: 下の値をこの投稿タイプだけに使います。\nどちらでも、記事ごとに保存された設定があればそちらが優先されます（「すべて現在の設定値を反映」で消せます）。"); ?></th>
                         <td>
                             <fieldset>
                                 <label>
@@ -1461,7 +1699,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                                     この投稿タイプ専用の設定を使用
                                 </label>
                             </fieldset>
-                            <p class="description">共通設定を使用する場合、基本設定タブで設定した値が適用されます。</p>
+                            <p class="description">共通設定を使用する場合、共通設定タブで設定した値が適用されます。</p>
                         </td>
                     </tr>
                 </table>
@@ -1500,7 +1738,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                 <div id="custom_settings_section" style="<?php echo $use_custom_settings ? '' : 'display: none;'; ?>">
                 <table class="form-table">
                     <tr>
-                        <th scope="row">🔍 関連記事の検索範囲</th>
+                        <th scope="row">🔍 関連記事の検索範囲<?php echo $this->help_tip("チェックした投稿タイプ・カテゴリの記事だけが、関連記事として表示される候補になります。\n関連記事を出すページ（どの記事の下に出すか）は、この設定では決まりません。\n記事ごとに保存された「対象投稿タイプ」があれば、そちらが優先されます。"); ?></th>
                         <td>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                                 <h4 style="margin: 0;">📄 投稿タイプ</h4>
@@ -1577,7 +1815,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label>📊 最大表示記事数</label></th>
+                        <th scope="row"><label>📊 最大表示記事数</label><?php echo $this->help_tip("この投稿タイプの記事に表示する関連記事の数です（1〜20）。"); ?></th>
                         <td>
                             <input type="number"
                                    name="max_posts"
@@ -1592,7 +1830,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label>🤖 AI分析用候補数追加</label></th>
+                        <th scope="row"><label>🤖 AI分析用候補数追加</label><?php echo $this->help_tip("GPT を使う方式で、GPT に渡す候補を表示件数より何件多くするかです（この投稿タイプの記事に使います）。「意味の近さで選ぶ」では使いません。"); ?></th>
                         <td>
                             <input type="number"
                                    name="ai_candidate_buffer"
@@ -1608,7 +1846,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label>💾 キャッシュ有効期限</label></th>
+                        <th scope="row"><label>💾 キャッシュ有効期限</label><?php echo $this->help_tip("この投稿タイプの記事で、選んだ関連記事を保存しておく時間です（1〜8760 時間）。期限が過ぎると、次の表示で選び直します。"); ?></th>
                         <td>
                             <input type="number"
                                    name="cache_lifetime"
@@ -1644,7 +1882,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
                             <div style="margin-top: 10px;">
                                 <button type="button" id="clear-post-type-cache-btn" class="button button-secondary"
-                                        data-post-type="<?php echo esc_attr($post_type_name); ?>">この投稿タイプのキャッシュをクリア</button>
+                                        data-post-type="<?php echo esc_attr($post_type_name); ?>">この投稿タイプのキャッシュをクリア</button><?php echo $this->help_tip("この投稿タイプの全記事の関連記事キャッシュを消します。次に記事が表示されたときに、今の設定で選び直します（意味の近さで選ぶ場合は費用はかかりません）。"); ?>
                             </div>
 
                             <script>
@@ -1704,7 +1942,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row">🎨 デフォルト表示形式</th>
+                        <th scope="row">🎨 デフォルト表示形式<?php echo $this->help_tip("リスト: 縦に 1 列で並べます。\nグリッド: カードを格子状に並べます。\nスライダー: 横にスライドさせて見せます（一度に見せる数は「スライダー表示数」）。"); ?></th>
                         <td>
                             <fieldset>
                                 <legend class="screen-reader-text"><span>デフォルト表示形式</span></legend>
@@ -1719,7 +1957,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row">🎨 カラーテーマ</th>
+                        <th scope="row">🎨 カラーテーマ<?php echo $this->help_tip("関連記事欄の見出しやボタンの色です。"); ?></th>
                         <td>
                             <fieldset>
                                 <legend class="screen-reader-text"><span>カラーテーマ</span></legend>
@@ -1737,7 +1975,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label>📝 見出しテキスト</label></th>
+                        <th scope="row"><label>📝 見出しテキスト</label><?php echo $this->help_tip("関連記事欄の上に出す見出しの文字です（この投稿タイプの記事に使います）。"); ?></th>
                         <td>
                             <input type="text"
                                    name="heading_text"
@@ -1750,7 +1988,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="heading_tag">🏷️ 見出しタグ</label></th>
+                        <th scope="row"><label for="heading_tag">🏷️ 見出しタグ</label><?php echo $this->help_tip("見出しに使う HTML タグです。記事の見出しの階層に合わせて選びます（通常は H2）。"); ?></th>
                         <td>
                             <select id="heading_tag" name="heading_tag">
                                 <option value="h2" <?php selected($heading_tag, 'h2'); ?>>H2</option>
@@ -1766,7 +2004,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="insert_position">📍 挿入位置</label></th>
+                        <th scope="row"><label for="insert_position">📍 挿入位置</label><?php echo $this->help_tip("関連記事を本文のどこに自動で入れるかです（この投稿タイプの記事に使います）。"); ?></th>
                         <td>
                             <select id="insert_position" name="insert_position">
                                 <option value="before_content" <?php selected($insert_position, 'before_content'); ?>>記事の前</option>
@@ -1789,7 +2027,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr id="slider_settings" style="<?php echo $display_method !== 'slider' ? 'display: none;' : ''; ?>">
-                        <th scope="row">📱 スライダー表示数</th>
+                        <th scope="row">📱 スライダー表示数<?php echo $this->help_tip("表示形式がスライダーのとき、この投稿タイプの記事で一度に見せる記事の数です（デスクトップ 1〜6、タブレット 1〜4、モバイル 1〜2）。"); ?></th>
                         <td>
                             <label>デスクトップ:
                                 <input type="number" name="slider_items_desktop" value="<?php echo esc_attr($slider_items_desktop); ?>" min="1" max="6" style="width: 60px;" />
@@ -1817,7 +2055,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                         <?php wp_nonce_field('kashiwazaki_settings', 'kashiwazaki_settings_nonce'); ?>
                         <input type="hidden" name="post_type" value="<?php echo esc_attr($post_type_name); ?>" />
                         <input type="hidden" name="reset_post_type_settings" value="1" />
-                        <input type="submit" class="button button-secondary" value="共通設定の値にリセット" onclick="return confirm('この投稿タイプの設定を共通設定の値にリセットしますか？');" />
+                        <input type="submit" class="button button-secondary" value="共通設定の値にリセット" onclick="return confirm('この投稿タイプの設定を共通設定の値にリセットしますか？');" /><?php echo $this->help_tip("この投稿タイプのカスタム設定を削除し、共通設定を使うように戻します。記事ごとに保存された設定は消えません（消すには投稿タイプ別設定の「すべて現在の設定値を反映」）。"); ?>
                     </form>
                 </div>
 
@@ -1936,7 +2174,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
         // デフォルト値とAPIキー設定を確認
         $options = get_option('kashiwazaki_seo_related_posts_options', array());
-        $api_key_set = !empty($options['api_key']);
+        $api_key_set = kashiwazaki_seo_related_posts_get_api_key() !== '';
 
         // 投稿タイプ別設定を取得
         $post_type = get_post_type($post->ID);
@@ -1994,7 +2232,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
             <!-- メイン有効化スイッチ -->
             <div style="background: #f0f8ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <label style="display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                <label style="display: inline-flex; align-items: center; gap: 10px; font-size: 14px;">
                     <input type="checkbox"
                            id="kashiwazaki_seo_related_posts_enabled"
                            name="kashiwazaki_seo_related_posts_enabled"
@@ -2002,7 +2240,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                            <?php checked($enabled, '1'); ?>
                            style="width: 20px; height: 20px;" />
                     <strong style="font-size: 15px;">この記事で関連記事を表示する</strong>
-                </label>
+                </label><?php echo $this->help_tip("ON にすると、この記事の本文に関連記事を自動で入れます。新しい記事は OFF で始まります。\n投稿タイプの全記事をまとめて ON にするには、投稿タイプ別設定の「すべて有効化」を使います。"); ?>
             </div>
 
             <!-- 設定エリア -->
@@ -2010,7 +2248,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
                 <!-- 現在の設定状況 -->
                 <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #333;">現在の設定状況</h4>
+                    <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #333;">現在の設定状況<?php echo $this->help_tip("この記事で今使われている値です。記事ごとに保存された値がなければ、投稿タイプ別のカスタム設定（なければ共通設定）の値です。"); ?></h4>
                     <ul style="margin: 5px 0; list-style: none; padding: 0;">
                         <li><strong>最大表示:</strong> <?php echo $max_posts; ?>件</li>
                         <li><strong>表示形式:</strong> <?php
@@ -2062,17 +2300,17 @@ class KashiwazakiSEORelatedPosts_Admin {
                     <div style="display: flex; gap: 10px;">
                         <button type="button" id="kashiwazaki-reset-to-defaults" class="button button-small">
                             この記事を現在のデフォルト値に戻す
-                        </button>
+                        </button><?php echo $this->help_tip("この記事の欄を、投稿タイプ別のカスタム設定（なければ共通設定）の値に戻します。記事を保存すると確定します。", 'right'); ?>
                         <button type="button" id="kashiwazaki-reset-all-posts" class="button button-small" style="background: #d63638; color: white; border-color: #d63638;">
                             「<?php echo esc_html(get_post_type_object($post->post_type)->label); ?>」をすべて現在のデフォルト値に戻す
-                        </button>
+                        </button><?php echo $this->help_tip("この投稿タイプの全記事で、記事ごとに保存された設定を消し、カスタム設定（なければ共通設定）に合わせます。表示の ON/OFF はそのままです。投稿タイプ別設定の「すべて現在の設定値を反映」と同じ操作です。", 'right'); ?>
                     </div>
                 </div>
 
                 <table class="form-table">
 
                     <tr>
-                        <th scope="row"><label for="kashiwazaki_seo_related_posts_max_posts">最大表示記事数</label></th>
+                        <th scope="row"><label for="kashiwazaki_seo_related_posts_max_posts">最大表示記事数</label><?php echo $this->help_tip("この記事に表示する関連記事の数です（1〜20）。この記事だけに使います。記事を保存すると確定します。"); ?></th>
                         <td>
                             <input type="number"
                                    id="kashiwazaki_seo_related_posts_max_posts"
@@ -2089,7 +2327,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row">表示形式</th>
+                        <th scope="row">表示形式<?php echo $this->help_tip("リスト・グリッド・スライダーから選びます。この記事だけに使います。記事を保存すると確定します。"); ?></th>
                         <td>
                             <fieldset>
                                 <legend class="screen-reader-text"><span>表示形式</span></legend>
@@ -2105,7 +2343,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="kashiwazaki_seo_related_posts_insert_position">挿入位置</label></th>
+                        <th scope="row"><label for="kashiwazaki_seo_related_posts_insert_position">挿入位置</label><?php echo $this->help_tip("関連記事を本文のどこに自動で入れるかです。この記事だけに使います。記事を保存すると確定します。"); ?></th>
                         <td>
                             <select id="kashiwazaki_seo_related_posts_insert_position" name="kashiwazaki_seo_related_posts_insert_position">
                                 <option value="before_content" <?php selected($insert_position, 'before_content'); ?>>記事の前</option>
@@ -2128,7 +2366,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row">対象投稿タイプ</th>
+                        <th scope="row">対象投稿タイプ<?php echo $this->help_tip("チェックした投稿タイプの記事だけが、この記事の関連記事の候補になります。\nこの記事を保存するとここの値が記事に保存され、カスタム設定や共通設定より優先されます。"); ?></th>
                         <td>
                             <div style="margin-bottom: 10px;">
                                 <button type="button" id="metabox-select-all-target-types" class="button button-small">全チェック</button>
@@ -2167,7 +2405,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row">カテゴリフィルタ</th>
+                        <th scope="row">カテゴリフィルタ<?php echo $this->help_tip("チェックしたカテゴリの記事だけが、この記事の関連記事の候補になります。チェックなしなら全カテゴリが対象です。\nこの記事だけに使います。記事を保存すると確定します。"); ?></th>
                         <td>
                             <?php
                             $categories = get_categories(array(
@@ -2217,7 +2455,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row">カラーテーマ</th>
+                        <th scope="row">カラーテーマ<?php echo $this->help_tip("この記事の関連記事欄の色です。この記事だけに使います。記事を保存すると確定します。"); ?></th>
                         <td>
                             <fieldset>
                                 <legend class="screen-reader-text"><span>カラーテーマ</span></legend>
@@ -2240,7 +2478,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="kashiwazaki_seo_related_posts_heading_text">関連記事見出し</label></th>
+                        <th scope="row"><label for="kashiwazaki_seo_related_posts_heading_text">関連記事見出し</label><?php echo $this->help_tip("この記事の関連記事欄の見出しの文字です。この記事だけに使います。記事を保存すると確定します。"); ?></th>
                         <td>
                             <input type="text"
                                    id="kashiwazaki_seo_related_posts_heading_text"
@@ -2255,7 +2493,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="kashiwazaki_seo_related_posts_heading_tag">見出しタグ</label></th>
+                        <th scope="row"><label for="kashiwazaki_seo_related_posts_heading_tag">見出しタグ</label><?php echo $this->help_tip("見出しに使う HTML タグです。この記事だけに使います。記事を保存すると確定します。"); ?></th>
                         <td>
                             <select id="kashiwazaki_seo_related_posts_heading_tag" name="kashiwazaki_seo_related_posts_heading_tag">
                                 <option value="h2" <?php selected($heading_tag, 'h2'); ?>>H2</option>
@@ -2274,7 +2512,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
                 <!-- 関連記事の生成 -->
                 <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-top: 20px; border-radius: 4px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #333;">関連記事の生成</h4>
+                    <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #333;">関連記事の生成<?php echo $this->help_tip("「関連記事を取得」を押すと、今の設定で選ばれる関連記事をその場で作って保存します。記事を保存してから押してください。"); ?></h4>
                 <div id="kashiwazaki-related-posts-preview">
                     <?php
                     // 保存された関連記事データを取得
@@ -2308,7 +2546,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                         <?php if ($cached_results): ?>
                         <button type="button" id="kashiwazaki-clear-cache" class="button button-secondary" style="margin-left: 10px;">
                             キャッシュクリア
-                        </button>
+                        </button><?php echo $this->help_tip("この記事の関連記事キャッシュを消します。次に記事が表示されたときに、今の設定で選び直します。"); ?>
                         <?php endif; ?>
                         <span id="kashiwazaki-fetch-status" style="margin-left: 10px; color: #666;"></span>
                     </div>
@@ -2832,8 +3070,16 @@ class KashiwazakiSEORelatedPosts_Admin {
 
         // AI分析対象要素は必須として固定
         $search_methods = array('tags', 'categories', 'directory', 'title', 'excerpt');
-        $max_posts = isset($_POST['max_posts']) ? absint($_POST['max_posts']) : 0;
-        $target_post_types = isset($_POST['target_post_types']) ? array_map('sanitize_text_field', $_POST['target_post_types']) : array();
+        $max_posts = isset($_POST['max_posts']) ? max(1, min(20, absint($_POST['max_posts']))) : 5;
+        $target_post_types = isset($_POST['target_post_types']) && is_array($_POST['target_post_types']) ? array_map('sanitize_key', wp_unslash($_POST['target_post_types'])) : array();
+        // 公開されている投稿タイプだけに限る（非公開の投稿タイプのタイトルを引き出せないようにする）
+        $public_post_types = get_post_types(array('public' => true), 'names');
+        $target_post_types = array_values(array_filter($target_post_types, function ($type) use ($public_post_types) {
+            return isset($public_post_types[$type]);
+        }));
+        if (empty($target_post_types)) {
+            $target_post_types = array('post');
+        }
 
         try {
             // 実行時間制限を20秒に設定
@@ -2843,20 +3089,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
             // プラグイン設定を取得
             $plugin_options = get_option('kashiwazaki_seo_related_posts_options', array());
-            $api_provider = isset($plugin_options['api_provider']) ? $plugin_options['api_provider'] : 'openrouter';
-
-            // API選択に基づいてAPIキーを取得
-            if ($api_provider === 'openrouter') {
-                $api_key = isset($plugin_options['openrouter_api_key']) ? $plugin_options['openrouter_api_key'] : '';
-                // 互換性のため、古いapi_keyも確認
-                if (empty($api_key) && isset($plugin_options['api_key'])) {
-                    $api_key = $plugin_options['api_key'];
-                }
-            } else {
-                $api_key = isset($plugin_options['openai_api_key']) ? $plugin_options['openai_api_key'] : '';
-            }
-
-            $use_ai = !empty($api_key);
+            $use_ai = kashiwazaki_seo_related_posts_get_api_key() !== '';
 
 
 
@@ -2886,7 +3119,9 @@ class KashiwazakiSEORelatedPosts_Admin {
                 'use_ai' => $use_ai,
                 'post_types' => $target_post_types,
                 'search_methods' => $search_methods,
-                'filter_categories' => $filter_categories
+                'filter_categories' => $filter_categories,
+                // GPT（有料）をこの操作で呼んでよいのは管理者だけ（それ以外の利用者には暫定の結果を出し、GPT の選定はバックグラウンドに回す）
+                'allow_paid_api' => current_user_can('manage_options')
             );
 
             $related_posts = $this->related_posts->get_related_posts($post_id, $options);
@@ -2963,6 +3198,7 @@ class KashiwazakiSEORelatedPosts_Admin {
                     'post_type' => $post_type,
                     'date' => $date,
                     'score' => is_numeric($score) ? round($score, 3) : $score,
+                    'method' => (is_array($related_post) && isset($related_post['method'])) ? $related_post['method'] : 'similarity',
                     'reason' => $reason
                 );
             }
@@ -2977,14 +3213,20 @@ class KashiwazakiSEORelatedPosts_Admin {
                 array_multisort($scores, SORT_DESC, SORT_NUMERIC, $cached_results);
             }
 
-            // 使用したモデル情報を取得（OpenAIのみ）
-            $used_model = isset($plugin_options['openai_model']) && !empty($plugin_options['openai_model']) ? $plugin_options['openai_model'] : 'gpt-4o-mini';
+            // 使用したモデル情報
+            $used_model = $use_ai ? $this->related_posts->get_used_model_label() : '文字の一致（AI なし）';
+            $degraded = $this->related_posts->is_last_result_degraded();
+            if ($degraded) {
+                $used_model .= '（暫定: GPT の選定はバックグラウンドで実行中、一部の記事のベクトルが未作成、または API エラー）';
+            }
 
-            // 新規取得結果をキャッシュとして保存
+            // 新規取得結果をキャッシュとして保存（暫定の結果は保存しない）
             $timestamp = time();
-            update_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_results', $cached_results);
-            update_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_timestamp', $timestamp);
-            update_post_meta($post_id, '_kashiwazaki_seo_related_posts_used_model', $used_model);
+            if (!$degraded) {
+                update_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_results', $cached_results);
+                update_post_meta($post_id, '_kashiwazaki_seo_related_posts_cached_timestamp', $timestamp);
+                update_post_meta($post_id, '_kashiwazaki_seo_related_posts_used_model', $used_model);
+            }
 
 
 
@@ -3108,7 +3350,7 @@ class KashiwazakiSEORelatedPosts_Admin {
         }
 
         // パラメータ取得と検証
-        $post_type = sanitize_text_field($_POST['post_type']);
+        $post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : '';
         if (!post_type_exists($post_type)) {
             wp_send_json_error('無効な投稿タイプです');
             return;
@@ -3163,7 +3405,7 @@ class KashiwazakiSEORelatedPosts_Admin {
 
             wp_send_json_success(array(
                 'message' => sprintf(
-                    '「%s」の %d 件の記事を現在のデフォルト値に戻しました。',
+                    '「%s」の %d 件の記事で記事ごとの設定を消し、現在の設定値に合わせました。',
                     $post_type_label,
                     $reset_count
                 ),

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表示形式とカラーテーマ - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li class="active"><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>表示形式とカラーテーマ</h1>
+    <p class="lead">関連記事の見た目は「表示形式」「カラーテーマ」「見出し」「挿入位置」で決まります。共通設定・投稿タイプ別のカスタム設定・記事ごとの設定のどこでも変えられます。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">表示形式</a></li>
+            <li><a href="#s2">カラーテーマ</a></li>
+            <li><a href="#s3">見出し</a></li>
+            <li><a href="#s4">挿入位置</a></li>
+        </ol>
+    </div>
+
+
+<h2 id="s1">表示形式</h2>
+
+<h3>リスト</h3>
+<p>記事のタイトルを縦に 1 列で並べます。場所を取らず、文字で読ませたいときに向いています。</p>
+<figure class="screenshot">
+    <img src="images/screenshots/front-list.png" alt="リスト表示" class="lightbox-trigger">
+    <figcaption>リスト</figcaption>
+</figure>
+
+<h3>グリッド</h3>
+<p>アイキャッチ画像付きのカードを格子状に並べます。画像で目を引きたいときに向いています。</p>
+<figure class="screenshot">
+    <img src="images/screenshots/front-grid.png" alt="グリッド表示" class="lightbox-trigger">
+    <figcaption>グリッド</figcaption>
+</figure>
+
+<h3>スライダー</h3>
+<p>カードを横に並べ、左右のボタンやスワイプで送ります。一度に見せる数は「スライダー表示数」（デスクトップ・タブレット・モバイル別）で決めます。</p>
+<figure class="screenshot">
+    <img src="images/screenshots/front-slider.png" alt="スライダー表示" class="lightbox-trigger">
+    <figcaption>スライダー</figcaption>
+</figure>
+
+<h2 id="s2">カラーテーマ</h2>
+
+<p>見出しの下線やボタンなどの色です。6 色から選びます。</p>
+
+<div class="theme-grid">
+    <figure><img src="images/screenshots/theme-blue.png" alt="ブルー" class="lightbox-trigger"><figcaption>ブルー（初期値）</figcaption></figure>
+    <figure><img src="images/screenshots/theme-orange.png" alt="オレンジ" class="lightbox-trigger"><figcaption>オレンジ</figcaption></figure>
+    <figure><img src="images/screenshots/theme-green.png" alt="グリーン" class="lightbox-trigger"><figcaption>グリーン</figcaption></figure>
+    <figure><img src="images/screenshots/theme-purple.png" alt="パープル" class="lightbox-trigger"><figcaption>パープル</figcaption></figure>
+    <figure><img src="images/screenshots/theme-red.png" alt="レッド" class="lightbox-trigger"><figcaption>レッド</figcaption></figure>
+    <figure><img src="images/screenshots/theme-white.png" alt="ホワイト" class="lightbox-trigger"><figcaption>ホワイト</figcaption></figure>
+</div>
+
+<h2 id="s3">見出し</h2>
+
+<table>
+    <thead><tr><th style="width:28%;">項目</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>見出しの文字</td><td>関連記事欄の上に出す文字です（初期値「関連記事」）。お知らせなら「関連ニュース」のように、投稿タイプごとに変えられます。</td></tr>
+        <tr><td>見出しタグ</td><td>H2・H3・H4・DIV から選びます。本文の見出しの階層に合わせると、文書の構造が整います。DIV にすると見出しとして扱われません。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s4">挿入位置</h2>
+
+<table>
+    <thead><tr><th style="width:28%;">位置</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>記事の後（初期値）</td><td>本文の最後に入れます。読み終えた人に次の記事を案内します。</td></tr>
+        <tr><td>記事の前</td><td>本文の前に入れます。</td></tr>
+        <tr><td>最初の段落の後</td><td>本文の最初の段落の直後に入れます。</td></tr>
+    </tbody>
+</table>
+
+<p>本文以外の場所（サイドバーやテンプレートの好きな位置）に出したいときは、<a href="shortcode.html">ショートコード・ウィジェット</a>を使います。</p>
+
+    <nav class="page-nav">
+        <a href="priority.html" class="prev">&laquo; 設定の優先順位と反映</a>
+        <a href="shortcode.html" class="next">ショートコード・ウィジェット &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

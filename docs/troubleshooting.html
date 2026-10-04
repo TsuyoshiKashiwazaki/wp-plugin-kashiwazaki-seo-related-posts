@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>トラブルシューティング - Kashiwazaki SEO Related Posts マニュアル</title>
-    <link rel="stylesheet" href="css/style.css?v=1">
+    <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 <button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
@@ -12,316 +12,137 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <h2 style="color:#fff;">Related Posts</h2>
-        <span class="version">v1.0.3</span>
+        <span class="version">v1.0.4</span>
         <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
     </div>
     <ul>
+        <li class="section-label">はじめに</li>
         <li><a href="index.html">概要</a></li>
-        <li><a href="setup.html">インストール・初期設定</a></li>
-        <li><a href="related-settings.html">詳細設定</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
         <li class="active"><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
     </ul>
 </nav>
 
 <main class="content">
     <h1>トラブルシューティング</h1>
-    <p class="lead">Kashiwazaki SEO Related Posts の使用中に発生しうる問題と対処法、動作要件、技術仕様について解説します。</p>
-
-    <h2>よくある問題と対処法</h2>
-
-    <h3>関連記事が表示されない</h3>
-    <table>
-        <thead>
-            <tr>
-                <th style="width:35%;">考えられる原因</th>
-                <th>対処法</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>プラグインが有効化されていない</td>
-                <td>管理画面の「プラグイン」一覧で、本プラグインが有効になっていることを確認してください。</td>
-            </tr>
-            <tr>
-                <td>OpenAI APIキーが未設定</td>
-                <td>設定画面でOpenAI APIキーが正しく入力されているか確認してください。</td>
-            </tr>
-            <tr>
-                <td>AI分析がまだ実行されていない</td>
-                <td>投稿に対するAI類似度分析が未実行の場合、関連記事は表示されません。設定画面から分析を実行してください。</td>
-            </tr>
-            <tr>
-                <td>投稿個別設定で非表示になっている</td>
-                <td>投稿編集画面のメタボックスで「関連記事を非表示」が有効になっていないか確認してください。</td>
-            </tr>
-            <tr>
-                <td>キャッシュプラグインが古い出力を表示している</td>
-                <td>キャッシュプラグインのキャッシュをクリアしてください。</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h3>OpenAI APIエラーが発生する</h3>
-    <table>
-        <thead>
-            <tr>
-                <th style="width:35%;">考えられる原因</th>
-                <th>対処法</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>APIキーが無効または期限切れ</td>
-                <td><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI Platform</a> でAPIキーのステータスを確認してください。</td>
-            </tr>
-            <tr>
-                <td>APIの利用上限に達している</td>
-                <td>OpenAIアカウントの利用上限を確認してください。必要に応じて上限を引き上げてください。</td>
-            </tr>
-            <tr>
-                <td>サーバーの外部通信が制限されている</td>
-                <td>ホスティング環境で <code>wp_remote_post</code> による外部HTTPリクエストが許可されているか確認してください。</td>
-            </tr>
-            <tr>
-                <td>OpenAIサービスが一時的にダウンしている</td>
-                <td><a href="https://status.openai.com/" target="_blank" rel="noopener">OpenAI Status</a> でサービス状況を確認し、復旧後に再試行してください。</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h3>関連記事のスタイルが崩れる</h3>
-    <table>
-        <thead>
-            <tr>
-                <th style="width:35%;">考えられる原因</th>
-                <th>対処法</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>テーマのCSSとの競合</td>
-                <td>ブラウザの開発者ツールで、テーマのCSSが関連記事のスタイルを上書きしていないか確認してください。</td>
-            </tr>
-            <tr>
-                <td>他のプラグインのCSS/JSとの競合</td>
-                <td>他のプラグインを一時的に無効にして、競合の原因を特定してください。</td>
-            </tr>
-            <tr>
-                <td>スライダーが正しく動作しない</td>
-                <td>JavaScriptエラーがないか確認してください。jQueryの競合が原因の場合があります。</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h3>AI分析の結果が不適切</h3>
-    <table>
-        <thead>
-            <tr>
-                <th style="width:35%;">考えられる原因</th>
-                <th>対処法</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>投稿数が少なすぎる</td>
-                <td>関連記事の精度は投稿数に依存します。十分な数の投稿がサイトに存在することを確認してください。</td>
-            </tr>
-            <tr>
-                <td>キャッシュが古い</td>
-                <td>設定画面の「キャッシュクリア」ボタンでキャッシュを削除し、AI分析を再実行してください。</td>
-            </tr>
-            <tr>
-                <td>特定の投稿で不適切な結果</td>
-                <td>投稿個別設定のメタボックスから、手動で関連記事を選択してAI提案を上書きしてください。</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="callout callout-tip">
-        <div class="callout-title">ヒント</div>
-        <p>問題が解決しない場合は、一度プラグインを無効化してから再有効化してみてください。設定値はデータベースに保持されるため、再有効化後も設定は維持されます。</p>
+    <p class="lead">よくある困りごとと、確かめる場所・直し方です。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">関連記事が表示されない</a></li>
+            <li><a href="#s2">設定を変えたのに記事に効かない</a></li>
+            <li><a href="#s3">関連なさそうな記事が出る・意味の近さになっていない</a></li>
+            <li><a href="#s4">ベクトルの作成が進まない</a></li>
+            <li><a href="#s5">OpenAI のエラー</a></li>
+            <li><a href="#s6">GPT を使う方式で、いつまでも GPT の結果にならない</a></li>
+            <li><a href="#s7">見た目が崩れる</a></li>
+            <li><a href="#s8">PHP 8.1 以降の互換性</a></li>
+        </ol>
     </div>
 
-    <h2>PHP 8.1 以降の互換性</h2>
 
-    <p>本プラグインは PHP 8.1 以降での運用を想定し、以下の対策を v1.0.2 で実施しています。</p>
+<h2 id="s1">関連記事が表示されない</h2>
+<table>
+    <thead><tr><th style="width:35%;">考えられる原因</th><th>確かめる場所・直し方</th></tr></thead>
+    <tbody>
+        <tr><td>その記事で「関連記事を表示する」が OFF</td><td>記事の編集画面の「この記事で関連記事を表示する」を ON にして保存します。新しい記事は OFF で始まります。まとめて ON にするには投稿タイプ別設定の「すべて有効化」（<a href="post-type-settings.html">投稿タイプ別設定</a>）。</td></tr>
+        <tr><td>編集画面に関連記事の設定欄が無い</td><td>投稿タイプ別設定で、その投稿タイプの「関連記事を表示」にチェックを入れて「表示設定を保存」。</td></tr>
+        <tr><td>候補になる記事が無い</td><td>「関連記事に選ぶ範囲」（対象投稿タイプ・カテゴリ）が狭すぎないか確認します。範囲に公開記事が 1 件も無いと表示されません。</td></tr>
+        <tr><td>ページキャッシュのプラグインが古いページを出している</td><td>ページキャッシュ（WP Rocket・LiteSpeed Cache など）を削除します。</td></tr>
+        <tr><td>テーマが本文を <code>the_content</code> で出していない</td><td>自動挿入は <code>the_content</code> を使います。出ない場合はテンプレートで <a href="shortcode.html">ショートコード</a> を使います。</td></tr>
+    </tbody>
+</table>
 
-    <h3>解消した Deprecated 警告</h3>
+<h2 id="s2">設定を変えたのに記事に効かない</h2>
+<table>
+    <thead><tr><th style="width:35%;">考えられる原因</th><th>確かめる場所・直し方</th></tr></thead>
+    <tbody>
+        <tr><td>記事に以前の設定値が保存されている</td><td>いちばん多い原因です。投稿タイプ別設定の赤い「すべて現在の設定値を反映」を押します（<a href="priority.html">設定の優先順位と反映</a>）。</td></tr>
+        <tr><td>キャッシュの期限が切れていない</td><td>記事の編集画面の「キャッシュクリア」、またはカスタム設定画面の「この投稿タイプのキャッシュをクリア」。</td></tr>
+        <tr><td>カスタム設定が「共通設定を使用」になっている</td><td>カスタム設定画面の「設定モード」を「この投稿タイプ専用の設定を使用」にして保存します。</td></tr>
+    </tbody>
+</table>
 
-    <table>
-        <thead>
-            <tr>
-                <th style="width:55%;">警告内容</th>
-                <th>v1.0.2 での対応</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><code>strpos(): Passing null to parameter #1 ($haystack)</code><br><code>str_replace(): Passing null to parameter #3 ($subject)</code></td>
-                <td>投稿タイプ別設定ページの登録時に親スラッグ <code>null</code> を空文字列 <code>''</code> に変更。WordPress 公式パターン（Yoast SEO PR #19125、Jetpack issue #28108、Google Site Kit issue #5998）と同等の修正方式。</td>
-            </tr>
-            <tr>
-                <td><code>strip_tags(): Passing null to parameter #1 ($string)</code> (admin-header.php:41)</td>
-                <td><code>load-{$hook_suffix}</code> アクションでページタイトルを <code>$GLOBALS['title']</code> にセットし、admin ヘッダー読み込み時の <code>strip_tags(null)</code> を回避。</td>
-            </tr>
-            <tr>
-                <td><code>Undefined array key 'nonce' / 'post_id' / 'max_posts'</code> (AJAX 経路)</td>
-                <td>AJAX エンドポイント 4 箇所の nonce 検証および 5 箇所の <code>$_POST</code> 直接アクセスに <code>isset()</code> ガードと <code>wp_unslash()</code> を追加。</td>
-            </tr>
-        </tbody>
-    </table>
+<h2 id="s3">関連なさそうな記事が出る・意味の近さになっていない</h2>
+<table>
+    <thead><tr><th style="width:35%;">考えられる原因</th><th>確かめる場所・直し方</th></tr></thead>
+    <tbody>
+        <tr><td>記事のベクトルがまだ無い</td><td>「ベクトルの作成状況」で左右の数がそろっているか確認し、足りなければ「未作成の記事をまとめて作成」。ベクトルができるまでは文字の一致の結果を表示します。</td></tr>
+        <tr><td>関連記事の選び方が「従来の方式」</td><td>「🤖 AIのAPI設定」タブで「意味の近さで選ぶ」を選んで保存します。</td></tr>
+        <tr><td>候補の範囲に関係の薄い投稿タイプが入っている</td><td>「関連記事に選ぶ範囲」から外します。</td></tr>
+        <tr><td>古いキャッシュが残っている</td><td>キャッシュをクリアします（<a href="cache-cost.html">キャッシュと費用</a>）。</td></tr>
+        <tr><td>記事の本文が短い・内容が似た記事が少ない</td><td>意味の近さは本文の内容で比べるため、記事数が少ないと近い記事が見つかりにくくなります。</td></tr>
+    </tbody>
+</table>
 
-    <div class="callout callout-info">
-        <div class="callout-title">補足</div>
-        <p><code>WP_DEBUG</code> および <code>WP_DEBUG_LOG</code> を有効化している環境で <code>wp-content/debug.log</code> に上記警告が記録されていた場合、v1.0.2 へのアップデートで解消します。アップデート後にも同種の警告が残る場合は、別プラグインまたはテーマが原因の可能性があります。</p>
-    </div>
+<h2 id="s4">ベクトルの作成が進まない</h2>
+<table>
+    <thead><tr><th style="width:35%;">考えられる原因</th><th>確かめる場所・直し方</th></tr></thead>
+    <tbody>
+        <tr><td>APIキーが無効・利用上限に達している</td><td>「APIキーテスト」で確かめます。OpenAI でエラーが出ると、10 分間は呼び出しを止めます。</td></tr>
+        <tr><td>WP-Cron が動いていない</td><td><code>DISABLE_WP_CRON</code> を設定しているサイトやアクセスの少ないサイトでは、バックグラウンドの作成が進みません。「未作成の記事をまとめて作成」を押すか、サーバーの cron で <code>wp-cron.php</code> を定期的に呼んでください。</td></tr>
+        <tr><td>記事が長すぎる・特殊な文字が多い</td><td>OpenAI が受け付けない記事は、文章を短くして送り直し、それでもだめな記事は作成失敗として飛ばします（ほかの記事の作成は続けます）。</td></tr>
+    </tbody>
+</table>
 
-    <h2>セキュリティ対策（v1.0.3）</h2>
+<h2 id="s5">OpenAI のエラー</h2>
+<table>
+    <thead><tr><th style="width:35%;">考えられる原因</th><th>確かめる場所・直し方</th></tr></thead>
+    <tbody>
+        <tr><td>APIキーが無効・期限切れ</td><td><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI Platform</a> でキーを確認し、新しいキーを入れ直します。</td></tr>
+        <tr><td>「保存済みのキーを復号できません」と出る</td><td>wp-config.php の認証用キー・ソルトが変わりました。APIキーを入れ直してください。</td></tr>
+        <tr><td>利用上限・残高不足</td><td>OpenAI の Billing で上限と残高を確認します。</td></tr>
+        <tr><td>サーバーから外部に通信できない</td><td>ホスティングで <code>api.openai.com</code> への HTTPS 通信が許可されているか確認します。</td></tr>
+        <tr><td>OpenAI 側の障害</td><td><a href="https://status.openai.com/" target="_blank" rel="noopener">OpenAI Status</a> を確認し、復旧を待ちます。</td></tr>
+        <tr><td>GPT モデルを保存できない</td><td>選んだモデルが関連記事の選定（chat completions）に使えません。別のモデルを選びます。</td></tr>
+        <tr><td>モデル一覧を取得できない</td><td>表示されるエラーを確認します。取得できないときも text-embedding-3-small / text-embedding-3-large は選べます。</td></tr>
+    </tbody>
+</table>
 
-    <p>v1.0.3 では以下のセキュリティ強化を実施しています。いずれもプラグインの利用方法を変えるものではなく、アップデートするだけで適用されます。</p>
+<h2 id="s6">GPT を使う方式で、いつまでも GPT の結果にならない</h2>
+<p>GPT の選定はバックグラウンド（WP-Cron）で記事ごとに行います。WP-Cron が動いていないと進みません。管理者が記事の編集画面で「関連記事を取得」を押すと、その場で GPT の結果を作って保存します。</p>
 
-    <table>
-        <thead>
-            <tr>
-                <th style="width:40%;">対策</th>
-                <th>v1.0.3 での対応</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>CSRF（クロスサイトリクエストフォージェリ）対策</td>
-                <td>設定保存フォームのすべての送信経路（共通設定・投稿タイプ別設定・キャッシュクリア等）に nonce 検証と <code>manage_options</code> 権限チェックを一元適用。JavaScript で生成されるフォームにも nonce フィールドを追加しました。</td>
-            </tr>
-            <tr>
-                <td>格納型 XSS（クロスサイトスクリプティング）対策</td>
-                <td>見出しタグ（heading_tag）の値を許可リスト方式（<code>h1</code>〜<code>h6</code> / <code>div</code> / <code>p</code>、不正値は <code>h2</code> にフォールバック）でサニタイズ。保存時・フロント出力時・管理画面表示時のすべてで適用します。</td>
-            </tr>
-            <tr>
-                <td>カテゴリフィルタの厳密化</td>
-                <td>カテゴリフィルタを全検索方式および AI 補完経路・管理画面プレビューに一律適用し、許可カテゴリ外の記事が関連記事に混入しないよう修正しました。</td>
-            </tr>
-            <tr>
-                <td>アンインストール時のデータ削除</td>
-                <td>プラグイン削除時に、保存したオプションと投稿メタを完全に削除します（マルチサイト対応）。</td>
-            </tr>
-        </tbody>
-    </table>
+<h2 id="s7">見た目が崩れる</h2>
+<table>
+    <thead><tr><th style="width:35%;">考えられる原因</th><th>確かめる場所・直し方</th></tr></thead>
+    <tbody>
+        <tr><td>テーマの CSS と競合している</td><td>ブラウザの開発者ツールで、テーマの CSS が <code>.kashiwazaki-related-posts</code> の見た目を上書きしていないか確認します。</td></tr>
+        <tr><td>スライダーが動かない</td><td>ブラウザのコンソールに JavaScript のエラーが出ていないか確認します。jQuery を読み込まないテーマ・最適化プラグインの JS 結合が原因のことがあります。</td></tr>
+        <tr><td>関連記事が二重に出る</td><td>自動挿入とショートコード・ウィジェットを同じ記事で使っていないか確認します。</td></tr>
+    </tbody>
+</table>
 
-    <div class="callout callout-info">
-        <div class="callout-title">補足</div>
-        <p>これらの対策は管理画面の設定保存と関連記事の表示に対する防御を強化するものです。通常の利用において表示や操作が変わることはありません。</p>
-    </div>
+<h2 id="s8">PHP 8.1 以降の互換性</h2>
+<p>v1.0.2 で、PHP 8.1 以降で出ていた Deprecated 警告（<code>strpos()</code> / <code>str_replace()</code> / <code>strip_tags()</code> に null を渡す警告、AJAX の未定義キー）を解消しています。アップデート後も同じ警告が残る場合は、別のプラグインやテーマが原因の可能性があります。</p>
 
-    <h2>動作要件</h2>
-
-    <table>
-        <thead>
-            <tr>
-                <th style="width:35%;">項目</th>
-                <th>要件</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>WordPress</td>
-                <td>5.0 以上</td>
-            </tr>
-            <tr>
-                <td>PHP</td>
-                <td>7.4 以上</td>
-            </tr>
-            <tr>
-                <td>OpenAI APIキー</td>
-                <td>AI関連記事機能を使用する場合は必須</td>
-            </tr>
-            <tr>
-                <td>対応ブラウザ</td>
-                <td>Chrome、Firefox、Safari、Edge（最新版）</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h2>技術仕様</h2>
-
-    <ul>
-        <li><strong>データ保存:</strong> wp_options (kashiwazaki_seo_related_posts_options), post_meta</li>
-        <li><strong>カスタムテーブル:</strong> なし</li>
-        <li><strong>外部通信:</strong> OpenAI API (wp_remote_post)</li>
-        <li><strong>Cronイベント:</strong> なし</li>
-        <li><strong>メール送信:</strong> なし</li>
-        <li><strong>フロントエンド:</strong> CSS 24KB、JS 7.6KB</li>
-    </ul>
-
-    <h2>アーキテクチャ</h2>
-
-    <p>Kashiwazaki SEO Related Posts は以下のコンポーネントで構成されています。</p>
-
-    <h3>フロントエンド</h3>
-    <ul>
-        <li>CSS（24KB）でリスト・グリッド・スライダーの3表示形式と6カラーテーマを実装</li>
-        <li>JavaScript（7.6KB）でスライダー動作とAJAX処理を実行</li>
-        <li>JSON-LDの出力は行わない</li>
-    </ul>
-
-    <h3>バックエンド</h3>
-    <ul>
-        <li>グローバル設定は <code>wp_options</code> テーブルに <code>kashiwazaki_seo_related_posts_options</code> キーで保存</li>
-        <li>投稿個別の関連記事データは <code>post_meta</code> に保存</li>
-        <li>AI分析結果は post_meta でキャッシュ</li>
-        <li>OpenAI APIとの通信は <code>wp_remote_post</code> で実行</li>
-        <li>4つのAJAXハンドラーで管理画面の非同期操作を実現</li>
-    </ul>
-
-    <h3>AI分析フロー</h3>
-
-    <div class="step">
-        <span class="step-number">1</span>
-        <div class="step-body">
-            <p>管理画面またはAJAXリクエストからAI分析が開始されます。</p>
-        </div>
-    </div>
-
-    <div class="step">
-        <span class="step-number">2</span>
-        <div class="step-body">
-            <p>投稿のタイトル・本文・カテゴリ情報を収集し、OpenAI APIに <code>wp_remote_post</code> で送信します。</p>
-        </div>
-    </div>
-
-    <div class="step">
-        <span class="step-number">3</span>
-        <div class="step-body">
-            <p>GPTが記事間の類似度をスコアリングし、関連度の高い記事を特定します。</p>
-        </div>
-    </div>
-
-    <div class="step">
-        <span class="step-number">4</span>
-        <div class="step-body">
-            <p>分析結果を投稿メタ（post_meta）に保存し、次回以降のアクセスではキャッシュからデータを返します。</p>
-        </div>
-    </div>
-
-    <div class="step">
-        <span class="step-number">5</span>
-        <div class="step-body">
-            <p>フロントエンドで設定に基づいた表示形式・カラーテーマで関連記事を描画します。</p>
-        </div>
-    </div>
-
-    <div class="callout callout-note">
-        <div class="callout-title">補足</div>
-        <p>カスタムテーブルやCronイベントは使用しないため、プラグインの削除時にデータベースに不要なデータが残ることはありません。<code>wp_options</code> の設定値と <code>post_meta</code>（キャッシュ含む）が削除対象です。</p>
-    </div>
+<div class="callout callout-tip">
+    <div class="callout-title">それでも解決しないとき</div>
+    <p>プラグインを一度無効化して再度有効化してみてください。設定はデータベースに残るので、再有効化しても消えません（削除＝アンインストールすると消えます）。</p>
+</div>
 
     <nav class="page-nav">
-        <a href="related-settings.html" class="prev">&laquo; 詳細設定</a>
-        <span></span>
+        <a href="cache-cost.html" class="prev">&laquo; キャッシュと費用</a>
+        <a href="faq.html" class="next">よくある質問 &raquo;</a>
     </nav>
 
     <footer class="manual-footer">
         <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
-        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.3</p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
     </footer>
 </main>
 

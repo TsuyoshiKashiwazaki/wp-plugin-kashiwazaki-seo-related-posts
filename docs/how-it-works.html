@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>関連記事が選ばれる仕組み - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li class="active"><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>関連記事が選ばれる仕組み</h1>
+    <p class="lead">このプラグインが何をもとに関連記事を選んでいるか、OpenAI をいつ使うか（費用がかかるのはどこか）を説明します。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">記事を「数値（ベクトル）」に変えて比べる</a></li>
+            <li><a href="#s2">関連記事の 3 つの選び方</a></li>
+            <li><a href="#s3">関連記事の候補になる記事</a></li>
+            <li><a href="#s4">ベクトルがまだ無い記事・APIキーが無いとき</a></li>
+            <li><a href="#s5">キャッシュ（選んだ結果の保存）</a></li>
+        </ol>
+    </div>
+
+
+<figure class="infographic">
+    <img src="images/infographics/ig-01-how-it-works.png" alt="関連記事が選ばれるまでの流れ" class="lightbox-trigger">
+    <figcaption>関連記事が選ばれるまで</figcaption>
+</figure>
+
+<h2 id="s1">記事を「数値（ベクトル）」に変えて比べる</h2>
+
+<p>「意味の近さで選ぶ」では、記事ごとに内容を表す数値の並び（ベクトル）を作ります。内容が近い記事ほど、数値も近くなります。関連記事を選ぶときは、表示している記事の数値と、候補の記事の数値を比べ、近いものから順に並べます。</p>
+
+<table>
+    <thead><tr><th style="width:30%;">段階</th><th>何をするか</th><th style="width:22%;">OpenAI</th></tr></thead>
+    <tbody>
+        <tr><td>① 記事を公開・更新</td><td>バックグラウンド（WP-Cron）でベクトルを作る予約を入れます。</td><td>—</td></tr>
+        <tr><td>② ベクトルを作る</td><td>記事のタイトル・カテゴリやタグの名前・抜粋・本文（先頭 3,000 文字）を OpenAI に送り、ベクトルにします。最大 20 記事をまとめて 1 回で送ります。</td><td><strong>使う（費用あり・ごくわずか）</strong></td></tr>
+        <tr><td>③ 記事ごとに保存</td><td>ベクトルを記事のデータ（投稿メタ）に保存します。記事の内容が変わらない限り作り直しません。</td><td>—</td></tr>
+        <tr><td>④ 数値どうしを比べる</td><td>記事が表示されたとき、保存済みのベクトルどうしをサイトのサーバーの中で比べます（コサイン類似度）。</td><td>使わない</td></tr>
+        <tr><td>⑤ 関連記事に表示</td><td>近い順に、表示件数の分だけ並べます。結果は記事ごとに保存し（キャッシュ）、期限まで使い回します。</td><td>使わない</td></tr>
+    </tbody>
+</table>
+
+<div class="callout callout-tip">
+    <div class="callout-title">同じ言葉がなくても選べる</div>
+    <p>たとえば「被リンクの増やし方」と「外部対策の基本」は、同じ言葉をほとんど使っていなくても内容が近いので、関連記事として選ばれます。タグやカテゴリをきちんと付けていない記事でも選べます。</p>
+</div>
+
+<h2 id="s2">関連記事の 3 つの選び方</h2>
+
+<p>「🤖 AIのAPI設定」タブの「関連記事の選び方」で選びます。</p>
+
+<figure class="infographic">
+    <img src="images/infographics/ig-02-selection-modes.png" alt="関連記事の 3 つの選び方" class="lightbox-trigger">
+</figure>
+
+<table>
+    <thead><tr><th style="width:24%;">選び方</th><th>どう選ぶか</th><th style="width:22%;">費用</th><th style="width:18%;">結果</th></tr></thead>
+    <tbody>
+        <tr><td><strong>意味の近さで選ぶ（推奨）</strong></td><td>ベクトルの近い順に選びます。</td><td>ベクトルを作るときだけ（ほぼ 0 円）</td><td>毎回同じ</td></tr>
+        <tr><td>意味の近さで候補を絞り、GPT が最終的に選ぶ</td><td>ベクトルの近い記事を「表示件数＋候補数追加」件まで集め、その中から GPT が選びます。</td><td>選ぶたびに GPT の料金</td><td>GPT 次第で変わる</td></tr>
+        <tr><td>従来の方式</td><td>タグ・カテゴリ・ディレクトリ・タイトル・抜粋の一致で候補を集め、GPT が選びます。</td><td>選ぶたびに GPT の料金</td><td>GPT 次第で変わる</td></tr>
+    </tbody>
+</table>
+
+<div class="callout callout-note">
+    <div class="callout-title">GPT を使う方式でも、訪問者の表示中には GPT を呼びません</div>
+    <p>GPT の選定はバックグラウンド（WP-Cron）で記事ごとに行い、結果ができるまでは意味の近さ（従来の方式では文字の一致）の結果を表示します。同じ記事で GPT を呼ぶのは 10 分に 1 回まで、GPT でエラーが出たときは 10 分間止めます。管理画面の「関連記事を取得」で GPT をその場で使えるのは管理者だけです。</p>
+</div>
+
+<h2 id="s3">関連記事の候補になる記事</h2>
+
+<p>次の条件をすべて満たす記事が候補になります。</p>
+
+<ul>
+    <li>公開済みの記事であること（表示している記事そのものは除きます）。</li>
+    <li>「関連記事に選ぶ記事の範囲」（共通設定・カスタム設定の「関連記事の検索範囲」、記事ごとの「対象投稿タイプ」）でチェックした投稿タイプの記事であること。</li>
+    <li>カテゴリにチェックを入れている場合は、そのカテゴリの記事であること（チェックなしなら全カテゴリ）。</li>
+    <li>意味の近さで選ぶ場合は、ベクトルが作成済みであること。比べる候補は最大 3,000 記事です。</li>
+</ul>
+
+<p>どの設定が使われるかは「<a href="priority.html">設定の優先順位と反映</a>」を見てください。</p>
+
+<h2 id="s4">ベクトルがまだ無い記事・APIキーが無いとき</h2>
+
+<table>
+    <thead><tr><th style="width:35%;">状況</th><th>どうなるか</th></tr></thead>
+    <tbody>
+        <tr><td>APIキーを設定していない</td><td>タグ・カテゴリ・ディレクトリ・タイトル・抜粋の一致で関連記事を選びます。</td></tr>
+        <tr><td>表示している記事のベクトルがまだ無い</td><td>ベクトルができるまで、文字の一致で選んだ結果を表示します（この暫定の結果は保存しません）。管理画面で開いたときや WP-Cron の処理でベクトルを作ります。</td></tr>
+        <tr><td>OpenAI でエラーが出た</td><td>10 分間は OpenAI を呼ばず、文字の一致の結果を表示します（暫定の結果は保存しません）。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s5">キャッシュ（選んだ結果の保存）</h2>
+
+<p>選んだ関連記事は記事ごとに保存し、「キャッシュ有効期限」まで使い回します。期限が過ぎると、次にその記事が表示されたときに選び直します。くわしくは「<a href="cache-cost.html">キャッシュと費用</a>」を見てください。</p>
+
+<figure class="infographic">
+    <img src="images/infographics/ig-06-cache.png" alt="関連記事のキャッシュの流れ" class="lightbox-trigger">
+</figure>
+
+    <nav class="page-nav">
+        <a href="quickstart.html" class="prev">&laquo; はじめての設定</a>
+        <a href="api-settings.html" class="next">AIのAPI設定 &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

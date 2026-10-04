@@ -15,6 +15,10 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 function kashiwazaki_seo_related_posts_uninstall_site() {
     global $wpdb;
 
+    // 予約しているベクトル作成を取り消す。
+    wp_unschedule_hook('kashiwazaki_seo_related_posts_embed_missing');
+    wp_unschedule_hook('kashiwazaki_seo_related_posts_gpt_select');
+
     // 既知の option を削除。
     $options = array(
         'kashiwazaki_seo_related_posts_options',
@@ -55,6 +59,7 @@ function kashiwazaki_seo_related_posts_uninstall_site() {
         '_kashiwazaki_seo_related_posts_heading_text',
         '_kashiwazaki_seo_related_posts_heading_tag',
         '_kashiwazaki_seo_related_posts_used_model',
+        '_kashiwazaki_seo_related_posts_embedding',
         '_kashiwazaki_debug_info',
     );
     foreach ($meta_keys as $meta_key) {

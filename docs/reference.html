@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技術仕様・セキュリティ - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li class="active"><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>技術仕様・セキュリティ</h1>
+    <p class="lead">開発者・サイト管理者向けに、保存するデータ・外部通信・バックグラウンド処理・セキュリティ対策をまとめます。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">保存するデータ</a></li>
+            <li><a href="#s2">外部通信（OpenAI）</a></li>
+            <li><a href="#s3">バックグラウンド処理（WP-Cron）</a></li>
+            <li><a href="#s4">ベクトルの比較</a></li>
+            <li><a href="#s5">セキュリティ</a></li>
+            <li><a href="#s6">AJAX ハンドラー</a></li>
+            <li><a href="#s7">動作要件</a></li>
+        </ol>
+    </div>
+
+
+<h2 id="s1">保存するデータ</h2>
+
+<table>
+    <thead><tr><th style="width:42%;">場所・キー</th><th>中身</th></tr></thead>
+    <tbody>
+        <tr><td><code>wp_options</code>: <code>kashiwazaki_seo_related_posts_options</code></td><td>共通設定・投稿タイプ別のカスタム設定（<code>post_type_settings_{投稿タイプ}</code>）・関連記事の選び方・モデル・暗号化した APIキー</td></tr>
+        <tr><td><code>wp_options</code>: <code>kashiwazaki_seo_related_posts_embedding_models</code></td><td>OpenAI から取得したモデルの一覧（1 日 1 回更新）</td></tr>
+        <tr><td><code>wp_options</code>: <code>kashiwazaki_seo_related_posts_api_logs</code> ほか</td><td>API の呼び出しの記録（GPT と Embedding に分けて、成功・失敗）</td></tr>
+        <tr><td><code>post_meta</code>: <code>_kashiwazaki_seo_related_posts_enabled</code></td><td>「この記事で関連記事を表示する」の ON/OFF</td></tr>
+        <tr><td><code>post_meta</code>: <code>_kashiwazaki_seo_related_posts_*</code>（max_posts / display_method / target_post_types など）</td><td>記事ごとの設定</td></tr>
+        <tr><td><code>post_meta</code>: <code>_kashiwazaki_seo_related_posts_cached_results</code> / <code>_cached_timestamp</code></td><td>関連記事のキャッシュ</td></tr>
+        <tr><td><code>post_meta</code>: <code>_kashiwazaki_seo_related_posts_embedding</code></td><td>記事のベクトル（モデル名・本文のハッシュ・次元数・base64 のベクトル）</td></tr>
+    </tbody>
+</table>
+<p>カスタムテーブルは使いません。アンインストール時は上のデータをすべて削除し、予約済みのバックグラウンド処理も取り消します（マルチサイト対応）。</p>
+
+<h2 id="s2">外部通信（OpenAI）</h2>
+<table>
+    <thead><tr><th style="width:38%;">エンドポイント</th><th>用途</th></tr></thead>
+    <tbody>
+        <tr><td><code>POST /v1/embeddings</code></td><td>記事のベクトル作成（最大 20 記事ずつ、本文は先頭 3,000 文字）</td></tr>
+        <tr><td><code>GET /v1/models</code></td><td>モデル一覧の取得・APIキーテスト（トークンを使わない）</td></tr>
+        <tr><td><code>POST /v1/chat/completions</code></td><td>GPT を使う方式での関連記事の選定、GPT モデル保存時の確認</td></tr>
+    </tbody>
+</table>
+<p>訪問者のページ表示中には OpenAI を呼びません。OpenAI でエラーが出たときは 10 分間呼び出しを止めます。</p>
+
+<h2 id="s3">バックグラウンド処理（WP-Cron）</h2>
+<table>
+    <thead><tr><th style="width:45%;">イベント</th><th>内容</th></tr></thead>
+    <tbody>
+        <tr><td><code>kashiwazaki_seo_related_posts_embed_missing</code></td><td>未作成のベクトルを作る単発イベント。1 回に 60 記事まで作り、残りがあれば続きを予約します。</td></tr>
+        <tr><td><code>kashiwazaki_seo_related_posts_gpt_select</code></td><td>GPT を使う方式で、記事ごとに GPT の選定を行う単発イベント（同じ記事は 10 分に 1 回まで）。</td></tr>
+    </tbody>
+</table>
+<p>どちらもプラグインの無効化・削除時に取り消します。<code>DISABLE_WP_CRON</code> を設定している場合は、サーバーの cron で <code>wp-cron.php</code> を定期的に呼んでください。</p>
+
+<h2 id="s4">ベクトルの比較</h2>
+<ul>
+    <li>OpenAI の返すベクトル（正規化済み）を base64 のまま保存し、比べるときに復元してコサイン類似度を計算します。</li>
+    <li>比べる候補は最大 3,000 記事です。記事の内容（ハッシュ）が変わったときだけ作り直します。</li>
+</ul>
+
+<h2 id="s5">セキュリティ</h2>
+
+<h3>v1.0.4 での対応</h3>
+<table>
+    <thead><tr><th style="width:32%;">対策</th><th>内容</th></tr></thead>
+    <tbody>
+        <tr><td>APIキーの暗号化</td><td>libsodium の secretbox で暗号化して保存します。鍵は wp-config.php の認証用ソルト（<code>wp_salt('auth')</code>）から作ります。暗号化できない環境では平文で保存しません。</td></tr>
+        <tr><td>APIキーを画面に出さない</td><td>保存済みのキーを入力欄の value に出力しません。表示は先頭と末尾の数文字だけです。</td></tr>
+        <tr><td>定数での設定</td><td><code>KASHIWAZAKI_SEO_RELATED_POSTS_OPENAI_API_KEY</code> を wp-config.php に書くと、データベースにキーを置かずに使えます。</td></tr>
+        <tr><td>旧 OpenRouter のキーの削除</td><td>使わなくなった OpenRouter 関連の処理を削除し、アップデート時にデータベースに残っていたキーを自動で削除します。</td></tr>
+        <tr><td>外部 CDN を使わない</td><td>管理画面の Chart.js（3.9.1、MIT）を同梱し、外部から読み込みません。</td></tr>
+        <tr><td>費用の暴走を防ぐ</td><td>訪問者の表示中に OpenAI を呼ばない、GPT は記事ごとに 10 分に 1 回まで、エラー時は 10 分停止、管理画面で GPT をその場で使えるのは管理者だけ。</td></tr>
+        <tr><td>入力の制限</td><td>関連記事プレビューの対象を公開投稿タイプに限り、表示件数を 1〜20 件に制限しています。OpenAI のエラーはメッセージ部分だけを表示します。</td></tr>
+    </tbody>
+</table>
+
+<h3>v1.0.3 での対応</h3>
+<table>
+    <thead><tr><th style="width:32%;">対策</th><th>内容</th></tr></thead>
+    <tbody>
+        <tr><td>CSRF 対策</td><td>設定保存のすべての送信に nonce 検証と <code>manage_options</code> の権限チェックを入れています。</td></tr>
+        <tr><td>格納型 XSS 対策</td><td>見出しタグを許可リスト（h1〜h6 / div / p）で検査し、保存時・表示時の両方で適用します。</td></tr>
+        <tr><td>カテゴリの絞り込み</td><td>カテゴリの絞り込みをすべての選び方に一律に適用しています。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s6">AJAX ハンドラー</h2>
+<table>
+    <thead><tr><th style="width:45%;">アクション</th><th>用途</th></tr></thead>
+    <tbody>
+        <tr><td><code>kashiwazaki_fetch_related_posts</code></td><td>記事の編集画面の「関連記事を取得」</td></tr>
+        <tr><td><code>kashiwazaki_clear_cache</code></td><td>記事のキャッシュクリア</td></tr>
+        <tr><td><code>kashiwazaki_reset_all_posts_to_defaults</code></td><td>投稿タイプの全記事を現在の設定値に合わせる</td></tr>
+        <tr><td><code>kashiwazaki_enable_all_posts</code></td><td>投稿タイプの全記事を「表示する」にする</td></tr>
+        <tr><td><code>kashiwazaki_embedding_backfill</code></td><td>未作成の記事のベクトルをまとめて作る</td></tr>
+        <tr><td><code>kashiwazaki_refresh_embedding_models</code></td><td>モデル一覧の取得</td></tr>
+    </tbody>
+</table>
+<p>すべて nonce 検証と権限チェックを行います。</p>
+
+<h2 id="s7">動作要件</h2>
+<table>
+    <thead><tr><th style="width:35%;">項目</th><th>要件</th></tr></thead>
+    <tbody>
+        <tr><td>WordPress</td><td>5.0 以上</td></tr>
+        <tr><td>PHP</td><td>7.4 以上（libsodium）</td></tr>
+        <tr><td>フロントエンド</td><td>CSS 約 24KB、JS 約 7.6KB（JSON-LD は出力しません）</td></tr>
+    </tbody>
+</table>
+
+    <nav class="page-nav">
+        <a href="faq.html" class="prev">&laquo; よくある質問</a>
+        <a href="changelog.html" class="next">変更履歴 &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

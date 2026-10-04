@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記事ごとの設定 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li class="active"><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>記事ごとの設定</h1>
+    <p class="lead">記事の編集画面の下にある「🔗 Kashiwazaki SEO Related Posts」欄で、その記事に関連記事を出すかどうかと、記事ごとの表示件数・範囲・見た目を設定します。ここの設定はいちばん優先されます。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">関連記事を表示する（ON / OFF）</a></li>
+            <li><a href="#s2">関連記事の生成（確認・作り直し）</a></li>
+            <li><a href="#s3">詳細設定</a></li>
+        </ol>
+    </div>
+
+
+<div class="callout callout-note">
+    <div class="callout-title">設定欄が出ないとき</div>
+    <p>「📋 投稿タイプ別設定」タブで、その投稿タイプの「関連記事を表示」にチェックを入れて保存してください。チェックした投稿タイプの編集画面にだけ、この欄が出ます。</p>
+</div>
+
+<h2 id="s1">関連記事を表示する（ON / OFF）</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/post-01-metabox.png" alt="記事の編集画面の関連記事の設定欄" class="lightbox-trigger">
+    <figcaption>関連記事の設定欄（「この記事で関連記事を表示する」が ON の状態）</figcaption>
+</figure>
+
+<table>
+    <thead><tr><th style="width:28%;">項目</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>この記事で関連記事を表示する</td><td>ON にすると、この記事の本文に関連記事を自動で入れます。<strong>新しい記事は OFF で始まります。</strong>OFF にすると下の設定は隠れ、OFF のまま記事を保存すると、この記事に保存されていた設定も消えます。</td></tr>
+        <tr><td>現在の設定状況</td><td>この記事で今使われている値（最大表示・表示形式・挿入位置・色・見出し・対象カテゴリ・対象投稿タイプ）です。記事に保存された値がなければ、カスタム設定（なければ共通設定）の値です。</td></tr>
+        <tr><td>詳細設定を開く</td><td>記事ごとの値を変える欄を開きます（下の「詳細設定」）。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s2">関連記事の生成（確認・作り直し）</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/post-03-fetch.png" alt="関連記事の生成" class="lightbox-trigger">
+    <figcaption>「関連記事を取得」で、今の設定で選ばれる関連記事を確認できます</figcaption>
+</figure>
+
+<table>
+    <thead><tr><th style="width:28%;">ボタン・表示</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>関連記事を取得</td><td>欄に入っている「最大表示記事数」「対象投稿タイプ」の値で関連記事をその場で選び、キャッシュに保存します。<strong>新しい記事は一度保存してから押してください。</strong>管理者が押した場合は、GPT を使う方式でもその場で GPT の結果を作ります。</td></tr>
+        <tr><td>キャッシュクリア</td><td>この記事の関連記事キャッシュを消します。次に記事が表示されたときに選び直します。</td></tr>
+        <tr><td>最終取得</td><td>キャッシュを作った日時、使ったモデル（意味の近さなら embedding モデル名）、経過時間と有効期限です。</td></tr>
+        <tr><td>一覧</td><td>選ばれた記事のタイトル・投稿タイプ・日付・スコア（近さ。大きいほど近い）です。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s3">詳細設定</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/post-02-detail.png" alt="記事ごとの詳細設定" class="lightbox-trigger" style="width:100%;max-width:480px;">
+    <figcaption>詳細設定（クリックで拡大）</figcaption>
+</figure>
+
+<table>
+    <thead><tr><th style="width:28%;">項目</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>最大表示記事数</td><td>この記事に表示する関連記事の数です（1〜20）。</td></tr>
+        <tr><td>表示形式</td><td>リスト・グリッド・スライダー。</td></tr>
+        <tr><td>挿入位置</td><td>記事の前・記事の後・最初の段落の後。</td></tr>
+        <tr><td>対象投稿タイプ</td><td>この記事の関連記事の候補にする投稿タイプです（共通設定の「関連記事の検索範囲」と同じ意味）。</td></tr>
+        <tr><td>カテゴリフィルタ</td><td>チェックしたカテゴリの記事だけを候補にします。チェックなしなら全カテゴリ。</td></tr>
+        <tr><td>カラーテーマ</td><td>この記事の関連記事欄の色です。</td></tr>
+        <tr><td>関連記事見出し / 見出しタグ</td><td>この記事の見出しの文字とタグです。</td></tr>
+    </tbody>
+</table>
+
+<table>
+    <thead><tr><th style="width:32%;">ボタン</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>この記事を現在のデフォルト値に戻す</td><td>欄の値を、カスタム設定（なければ共通設定）の値に戻します。記事を保存すると確定します。</td></tr>
+        <tr><td><span class="btn-sample btn-red">「投稿タイプ名」をすべて現在のデフォルト値に戻す</span></td><td>この投稿タイプの全記事で、記事ごとに保存された設定を消してカスタム設定（なければ共通設定）に合わせます。投稿タイプ別設定の「すべて現在の設定値を反映」と同じ操作です。</td></tr>
+    </tbody>
+</table>
+
+<div class="callout callout-warning">
+    <div class="callout-title">記事を保存すると、欄の値がすべて記事に残ります</div>
+    <p>「この記事で関連記事を表示する」が ON の記事を保存すると、詳細設定を開いていなくても、欄の値（そのときの初期値）がすべて記事に保存されます。あとで共通設定やカスタム設定を変えても、この記事には効きません。理由と対処は「<a href="priority.html">設定の優先順位と反映</a>」を見てください。記事を保存すると、その記事の関連記事キャッシュも消えます。</p>
+</div>
+
+    <nav class="page-nav">
+        <a href="post-type-settings.html" class="prev">&laquo; 投稿タイプ別設定</a>
+        <a href="priority.html" class="next">設定の優先順位と反映 &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

@@ -91,21 +91,32 @@ jQuery(document).ready(function ($) {
         $(this).closest('.notice').fadeOut();
     });
 
-    // フォーム送信時のローディング表示
-    $('form').on('submit', function () {
-        var $submitButton = $(this).find('input[type="submit"], button[type="submit"]');
-        var originalValue = $submitButton.val() || $submitButton.text();
+    // フォーム送信時のローディング表示（プラグイン設定画面のみ）
+    // 投稿編集画面では WordPress 本体のフォーム（公開・下書き保存）に干渉させない
+    var isSettingsPage = typeof kashiwazaki_related_posts_ajax !== 'undefined' && kashiwazaki_related_posts_ajax.is_settings_page;
+    if (isSettingsPage) {
+        $('form').on('submit', function (e) {
+            if (e.isDefaultPrevented()) {
+                return;
+            }
 
-        if ($submitButton.attr('name') === 'test_api') {
-            return true; // APIテストボタンは別処理
-        }
+            var $submitButton = $(this).find('input[type="submit"], button[type="submit"]');
+            var originalValue = $submitButton.val() || $submitButton.text();
 
-        $submitButton.val('保存中...').text('保存中...').prop('disabled', true);
+            if ($submitButton.attr('name') === 'test_api') {
+                return true; // APIテストボタンは別処理
+            }
 
-        setTimeout(function () {
-            $submitButton.val(originalValue).text(originalValue).prop('disabled', false);
-        }, 2000);
-    });
+            // 送信データの組み立て後に無効化する（submit 中に disabled にすると押したボタンの name/value が送信されない）
+            setTimeout(function () {
+                $submitButton.val('保存中...').text('保存中...').prop('disabled', true);
+            }, 0);
+
+            setTimeout(function () {
+                $submitButton.val(originalValue).text(originalValue).prop('disabled', false);
+            }, 2000);
+        });
+    }
 
     // 設定セクションの折りたたみ（将来の拡張用）
     $('.settings-section').each(function () {

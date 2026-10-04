@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投稿タイプ別設定 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li class="active"><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>投稿タイプ別設定</h1>
+    <p class="lead">「📋 投稿タイプ別設定」タブでは、投稿タイプ（投稿・固定ページ・カスタム投稿タイプ）ごとに、関連記事の設定欄を出すか、専用の初期値（カスタム設定）を使うかを決めます。全記事をまとめて ON にしたり、記事に残った設定をまとめて消したりするのもこの画面です。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">投稿タイプの一覧表</a></li>
+            <li><a href="#s2">操作ボタン</a></li>
+            <li><a href="#s3">カスタム設定画面</a></li>
+        </ol>
+    </div>
+
+
+<figure class="screenshot">
+    <img src="images/screenshots/pt-01-about.png" alt="投稿タイプ別設定について" class="lightbox-trigger">
+    <figcaption>画面上部の説明（設定の優先順位も書いています）</figcaption>
+</figure>
+
+<h2 id="s1">投稿タイプの一覧表</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/pt-02-table.png" alt="投稿タイプ別設定の表" class="lightbox-trigger">
+</figure>
+
+<table>
+    <thead><tr><th style="width:25%;">列</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>投稿タイプ</td><td>名前をクリックすると、その投稿タイプの記事一覧を開きます。</td></tr>
+        <tr><td>キャッシュ / 記事数</td><td>関連記事を作り終えて保存してある記事の数 / 公開中の記事の数です。キャッシュは記事が表示されたときに作られるので、表示されていない記事は数に入りません。</td></tr>
+        <tr><td>関連記事を表示</td><td><strong>チェックすると、その投稿タイプの編集画面に関連記事の設定欄が出ます。</strong>実際に記事に関連記事を出すかは、記事ごとの「この記事で関連記事を表示する」で決まります。変えたら「表示設定を保存」を押します。</td></tr>
+        <tr><td>設定状態</td><td>「カスタム設定」はその投稿タイプ専用の値、「共通設定を使用」は共通設定タブの値を使っていることを表します。</td></tr>
+        <tr><td>操作</td><td>下の 3 つのボタンです。<strong>「関連記事を表示」にチェックが入っている投稿タイプにだけ表示されます</strong>（チェックを変えるとすぐに出たり消えたりします）。</td></tr>
+    </tbody>
+</table>
+
+<figure class="screenshot">
+    <img src="images/screenshots/pt-04-tooltip-show.png" alt="関連記事を表示のツールチップ" class="lightbox-trigger">
+    <figcaption>見出しの「?」にマウスを乗せると説明が出ます</figcaption>
+</figure>
+
+<h2 id="s2">操作ボタン</h2>
+
+<figure class="screenshot">
+    <img src="images/screenshots/pt-03-tooltip-actions.png" alt="操作ボタンの説明" class="lightbox-trigger">
+</figure>
+
+<table>
+    <thead><tr><th style="width:28%;">ボタン</th><th>何が起きるか</th></tr></thead>
+    <tbody>
+        <tr><td><span class="btn-sample btn-blue">設定を編集</span> / <span class="btn-sample btn-blue">カスタム設定を作成</span></td><td>その投稿タイプのカスタム設定画面を開きます（下の「カスタム設定画面」）。</td></tr>
+        <tr><td><span class="btn-sample btn-green">すべて有効化</span></td><td>その投稿タイプの<strong>今ある全記事</strong>で「この記事で関連記事を表示する」を ON にします。表示件数・範囲・色など、ほかの設定は変えません。これから作る記事は OFF で始まります。</td></tr>
+        <tr><td><span class="btn-sample btn-red">すべて現在の設定値を反映</span></td><td>その投稿タイプの全記事で、<strong>記事ごとに保存された設定と関連記事のキャッシュを消し</strong>、今のカスタム設定（なければ共通設定）に合わせます。「この記事で関連記事を表示する」の ON/OFF はそのままです。押すと確認のダイアログが出ます。取り消せません。</td></tr>
+    </tbody>
+</table>
+
+<div class="callout callout-tip">
+    <div class="callout-title">カスタム設定を変えたのに記事に効かないとき</div>
+    <p>記事に設定が残っているのが原因です。カスタム設定を保存したあと、赤い「すべて現在の設定値を反映」を押してください。くわしくは「<a href="priority.html">設定の優先順位と反映</a>」。</p>
+</div>
+
+<h2 id="s3">カスタム設定画面</h2>
+
+<p>「設定を編集」または「カスタム設定を作成」で開きます。「この投稿タイプ専用の設定を使用」を選ぶと、共通設定と同じ項目をこの投稿タイプだけの値で設定できます。</p>
+
+<figure class="screenshot">
+    <img src="images/screenshots/custom-00-full.png" alt="カスタム設定画面" class="lightbox-trigger">
+    <figcaption>カスタム設定画面（「この投稿タイプ専用の設定を使用」を選んだ状態）</figcaption>
+</figure>
+
+<table>
+    <thead><tr><th style="width:25%;">項目</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>⚙️ 設定モード</td><td>「共通設定を使用」なら共通設定タブの値を、「この投稿タイプ専用の設定を使用」なら下の値をこの投稿タイプに使います。</td></tr>
+        <tr><td>🔍 関連記事の検索範囲</td><td>この投稿タイプの記事で、関連記事の候補にする投稿タイプ・カテゴリです。</td></tr>
+        <tr><td>📊 最大表示記事数</td><td>この投稿タイプの記事に表示する関連記事の数です。</td></tr>
+        <tr><td>🤖 AI分析用候補数追加</td><td>GPT を使う方式で、GPT に渡す候補の追加件数です。</td></tr>
+        <tr><td>💾 キャッシュ有効期限</td><td>この投稿タイプの記事で、関連記事を保存しておく時間です。「この投稿タイプのキャッシュをクリア」で、この投稿タイプの記事のキャッシュだけを消せます。</td></tr>
+        <tr><td>🎨 デフォルト表示形式 / カラーテーマ</td><td>この投稿タイプの記事の表示形式と色です。</td></tr>
+        <tr><td>📝 見出しテキスト / 🏷️ 見出しタグ</td><td>この投稿タイプの記事の見出しの文字とタグです。</td></tr>
+        <tr><td>📍 挿入位置</td><td>この投稿タイプの記事で、関連記事を入れる位置です。</td></tr>
+        <tr><td>📱 スライダー表示数</td><td>この投稿タイプの記事で、スライダーに一度に見せる数です。</td></tr>
+    </tbody>
+</table>
+
+<table>
+    <thead><tr><th style="width:28%;">ボタン</th><th>説明</th></tr></thead>
+    <tbody>
+        <tr><td>設定を保存</td><td>この画面の値を保存します。</td></tr>
+        <tr><td>共通設定の値にリセット</td><td>この投稿タイプのカスタム設定を削除し、共通設定を使うように戻します。記事ごとに保存された設定は消えません（消すには一覧表の「すべて現在の設定値を反映」）。</td></tr>
+    </tbody>
+</table>
+
+<div class="callout callout-note">
+    <div class="callout-title">v1.0.4 から効くようになった項目</div>
+    <p>カスタム設定の「キャッシュ有効期限」「AI分析用候補数追加」「スライダー表示数」は、v1.0.3 までは保存されても使われず、共通設定の値が使われていました。v1.0.4 からはカスタム設定の値が使われます。</p>
+</div>
+
+    <nav class="page-nav">
+        <a href="common-settings.html" class="prev">&laquo; 共通設定</a>
+        <a href="post-settings.html" class="next">記事ごとの設定 &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

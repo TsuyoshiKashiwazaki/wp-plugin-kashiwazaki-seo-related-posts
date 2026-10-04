@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>変更履歴 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li class="active"><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>変更履歴</h1>
+    <p class="lead">バージョンごとの主な変更です。くわしい一覧は GitHub の <a href="https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-related-posts/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG.md</a> にあります。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">v1.0.4（2026-10-04）</a></li>
+            <li><a href="#s2">v1.0.3（2026-06-26）</a></li>
+            <li><a href="#s3">v1.0.2</a></li>
+            <li><a href="#s4">v1.0.1</a></li>
+            <li><a href="#s5">v1.0.0</a></li>
+        </ol>
+    </div>
+
+
+<h2 id="s1">v1.0.4（2026-10-04）</h2>
+
+<h3>新しくできるようになったこと</h3>
+<ul>
+    <li>関連記事を「意味の近さ」で選ぶようになりました（OpenAI Embeddings、既定は text-embedding-3-small）。記事を公開・更新するとベクトルを自動で作ります。</li>
+    <li>関連記事の選び方を「意味の近さで選ぶ」「意味の近さ＋GPT」「従来の方式」から選べます。GPT を使う方式でも、訪問者のページ表示中には GPT を呼ばず、バックグラウンドで選びます。</li>
+    <li>使える embedding モデルと GPT モデルを OpenAI から自動で取得します（取得ボタン付き）。GPT モデルは保存するときに使えるか確かめます。</li>
+    <li>投稿タイプ別設定に「すべて現在の設定値を反映」ボタンを追加しました。記事ごとに保存された設定を消して、カスタム設定（なければ共通設定）を既存の記事にまとめて効かせます。</li>
+    <li>設定画面のすべての項目に、説明のツールチップ（「?」）を付けました。</li>
+    <li>共通設定にスライダー表示数を追加しました。</li>
+    <li>保存済みの APIキーを、確認ダイアログ付きの「保存済みのキーを削除」ボタンで消せます。wp-config.php の定数でキーを設定することもできます。</li>
+    <li>API 呼び出し統計を GPT と Embedding に分けて表示します。</li>
+</ul>
+
+<h3>直した不具合</h3>
+<ul>
+    <li>クラシックエディタの投稿編集画面（アンケートなど）で「公開」を押しても下書きとして保存される問題。</li>
+    <li>ショートコードで <code>use_ai</code> を省略すると、APIキーがあっても AI を使わなかった問題。</li>
+    <li>投稿タイプ別のカスタム設定の「キャッシュ有効期限」「AI分析用候補数追加」「スライダー表示数」が使われず、共通設定の値が使われていた問題。</li>
+    <li>30 日間のグラフに今日が入っていなかった問題。</li>
+    <li>AI に渡す抜粋が日本語環境で 30 文字に切られていた問題（200 文字に）。</li>
+    <li>操作ボタンを「関連記事を表示」にチェックが入っている投稿タイプだけに出すようにしました。</li>
+</ul>
+
+<h3>セキュリティ</h3>
+<ul>
+    <li>OpenAI の APIキーを暗号化して保存し、設定画面の HTML にも出さないようにしました。</li>
+    <li>OpenRouter 関連の処理を削除し、データベースに残っていた OpenRouter のキーを自動で削除します。</li>
+    <li>管理画面の Chart.js を外部 CDN から読み込まず、同梱しました。</li>
+</ul>
+
+<h2 id="s2">v1.0.3（2026-06-26）</h2>
+<ul>
+    <li>設定保存の全経路に CSRF 対策（nonce 検証と権限チェック）。</li>
+    <li>見出しタグの格納型 XSS 対策（許可リスト方式）。</li>
+    <li>カテゴリの絞り込みをすべての選び方に適用。</li>
+    <li>アンインストール時に設定・投稿メタを完全に削除（マルチサイト対応）。</li>
+</ul>
+
+<h2 id="s3">v1.0.2</h2>
+<ul>
+    <li>PHP 8.1 以降の Deprecated 警告を解消。</li>
+    <li>AJAX の入力チェックを強化。</li>
+</ul>
+
+<h2 id="s4">v1.0.1</h2>
+<ul>
+    <li>メタボックスの HTML 構造を修正し、ほかのプラグインのメタボックスの開閉に影響する問題を解消。</li>
+</ul>
+
+<h2 id="s5">v1.0.0</h2>
+<ul>
+    <li>初回リリース。</li>
+</ul>
+
+    <nav class="page-nav">
+        <a href="reference.html" class="prev">&laquo; 技術仕様・セキュリティ</a>
+        <span></span>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

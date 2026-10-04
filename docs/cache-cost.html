@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャッシュと費用 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li class="active"><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>キャッシュと費用</h1>
+    <p class="lead">選んだ関連記事は記事ごとに保存（キャッシュ）して使い回します。キャッシュがいつ作られ、いつ消えるか、OpenAI の費用がどこでかかるかをまとめます。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">キャッシュが作られるとき</a></li>
+            <li><a href="#s2">キャッシュの有効期限</a></li>
+            <li><a href="#s3">キャッシュが消えるとき</a></li>
+            <li><a href="#s4">OpenAI の費用がかかるところ</a></li>
+        </ol>
+    </div>
+
+
+<figure class="infographic">
+    <img src="images/infographics/ig-06-cache.png" alt="関連記事のキャッシュの流れ" class="lightbox-trigger">
+</figure>
+
+<h2 id="s1">キャッシュが作られるとき</h2>
+
+<ul>
+    <li>記事が表示され、その記事のキャッシュが無いか、期限が過ぎていたとき（その場で選んで保存します）。</li>
+    <li>記事の編集画面で「関連記事を取得」を押したとき。</li>
+</ul>
+
+<p>ベクトルがまだ無い・OpenAI でエラーが出た、などで暫定の結果を表示したときは保存しません。次の表示で選び直します。</p>
+
+<h2 id="s2">キャッシュの有効期限</h2>
+
+<p>共通設定（または投稿タイプ別のカスタム設定）の「キャッシュ有効期限」で決めます（1〜8,760 時間、初期値 24 時間）。期限が過ぎたキャッシュは使われず、次にその記事が表示されたときに選び直します。</p>
+
+<table>
+    <thead><tr><th style="width:30%;">期限</th><th>向いているサイト</th></tr></thead>
+    <tbody>
+        <tr><td>短い（24 時間など）</td><td>記事をよく追加するサイト。新しい記事が早く関連記事に出ます。</td></tr>
+        <tr><td>長い（168 時間＝1 週間など）</td><td>記事があまり増えないサイト。選び直しの回数が減ります。GPT を使う方式では費用も減ります。</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s3">キャッシュが消えるとき</h2>
+
+<table>
+    <thead><tr><th style="width:40%;">操作</th><th>消える範囲</th></tr></thead>
+    <tbody>
+        <tr><td>記事を保存した</td><td>その記事</td></tr>
+        <tr><td>記事の編集画面の「キャッシュクリア」</td><td>その記事</td></tr>
+        <tr><td>カスタム設定画面の「この投稿タイプのキャッシュをクリア」</td><td>その投稿タイプの全記事</td></tr>
+        <tr><td>「すべて現在の設定値を反映」</td><td>その投稿タイプの全記事</td></tr>
+        <tr><td>「関連記事の選び方」や「Embedding モデル」を変えて保存した</td><td>全記事</td></tr>
+        <tr><td>「全設定をリセット」</td><td>全記事（ほかの設定も消えます）</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s4">OpenAI の費用がかかるところ</h2>
+
+<table>
+    <thead><tr><th style="width:32%;">処理</th><th>いつ</th><th style="width:28%;">費用の目安</th></tr></thead>
+    <tbody>
+        <tr><td>記事のベクトルを作る（Embedding）</td><td>導入時・記事の公開や更新時・Embedding モデルを変えたとき</td><td>text-embedding-3-small は 100 万トークンで $0.02。数百記事でも 1 円未満</td></tr>
+        <tr><td>関連記事を選ぶ（意味の近さで選ぶ）</td><td>キャッシュを作るとき</td><td><strong>かからない</strong>（サーバーの中で計算）</td></tr>
+        <tr><td>関連記事を選ぶ（GPT を使う方式）</td><td>キャッシュを作るたび（記事ごと・期限ごと）</td><td>GPT モデルの料金 × 回数</td></tr>
+        <tr><td>モデル一覧の取得・APIキーテスト</td><td>1 日 1 回・ボタンを押したとき</td><td>かからない</td></tr>
+        <tr><td>GPT モデルの確認</td><td>GPT モデルを変えて保存したとき 1 回</td><td>ごくわずか</td></tr>
+    </tbody>
+</table>
+
+<div class="callout callout-tip">
+    <div class="callout-title">費用を抑えるには</div>
+    <p>「意味の近さで選ぶ」を使えば、関連記事を選ぶたびの費用はかかりません。GPT を使う方式を選ぶ場合は、キャッシュ有効期限を長めにすると呼び出し回数が減ります。実際の回数は「🤖 AIのAPI設定」タブの「API呼び出し統計」で確認できます。OpenAI 側でも使用量の上限を設定しておくと安心です。</p>
+</div>
+
+    <nav class="page-nav">
+        <a href="shortcode.html" class="prev">&laquo; ショートコード・ウィジェット</a>
+        <a href="troubleshooting.html" class="next">トラブルシューティング &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

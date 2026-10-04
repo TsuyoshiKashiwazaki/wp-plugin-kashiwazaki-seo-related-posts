@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>設定の優先順位と反映 - Kashiwazaki SEO Related Posts マニュアル</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<button class="hamburger-btn" aria-label="メニュー">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2 style="color:#fff;">Related Posts</h2>
+        <span class="version">v1.0.4</span>
+        <img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;">
+    </div>
+    <ul>
+        <li class="section-label">はじめに</li>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="quickstart.html">はじめての設定</a></li>
+        <li><a href="how-it-works.html">関連記事が選ばれる仕組み</a></li>
+        <li class="section-label">設定画面</li>
+        <li><a href="api-settings.html">AIのAPI設定</a></li>
+        <li><a href="common-settings.html">共通設定</a></li>
+        <li><a href="post-type-settings.html">投稿タイプ別設定</a></li>
+        <li><a href="post-settings.html">記事ごとの設定</a></li>
+        <li class="section-label">使いこなす</li>
+        <li class="active"><a href="priority.html">設定の優先順位と反映</a></li>
+        <li><a href="display.html">表示形式とカラーテーマ</a></li>
+        <li><a href="shortcode.html">ショートコード・ウィジェット</a></li>
+        <li><a href="cache-cost.html">キャッシュと費用</a></li>
+        <li class="section-label">困ったとき</li>
+        <li><a href="troubleshooting.html">トラブルシューティング</a></li>
+        <li><a href="faq.html">よくある質問</a></li>
+        <li><a href="reference.html">技術仕様・セキュリティ</a></li>
+        <li><a href="changelog.html">変更履歴</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+    <h1>設定の優先順位と反映</h1>
+    <p class="lead">関連記事の設定は「共通設定」「投稿タイプ別のカスタム設定」「記事ごとの設定」の 3 段階です。どれが使われるか、設定を変えたのに記事に効かないときはどうするかを説明します。</p>
+    <div class="page-toc">
+        <div class="page-toc-title">このページの内容</div>
+        <ol>
+            <li><a href="#s1">3 段階の設定</a></li>
+            <li><a href="#s2">設定を変えても記事に効かない理由</a></li>
+            <li><a href="#s3">変えた設定を既存の記事に効かせる</a></li>
+        </ol>
+    </div>
+
+
+<figure class="infographic">
+    <img src="images/infographics/ig-03-priority.png" alt="設定の優先順位" class="lightbox-trigger">
+</figure>
+
+<h2 id="s1">3 段階の設定</h2>
+
+<table>
+    <thead><tr><th style="width:26%;">段階</th><th>どこで設定するか</th><th style="width:16%;">優先度</th></tr></thead>
+    <tbody>
+        <tr><td>記事ごとの設定</td><td>記事の編集画面の「🔗 Kashiwazaki SEO Related Posts」欄（<a href="post-settings.html">記事ごとの設定</a>）</td><td>いちばん高い</td></tr>
+        <tr><td>投稿タイプ別のカスタム設定</td><td>「📋 投稿タイプ別設定」タブ →「設定を編集」で「この投稿タイプ専用の設定を使用」（<a href="post-type-settings.html">投稿タイプ別設定</a>）</td><td>中</td></tr>
+        <tr><td>共通設定</td><td>「🌐 共通設定」タブ（<a href="common-settings.html">共通設定</a>）</td><td>いちばん低い</td></tr>
+    </tbody>
+</table>
+
+<p>項目ごとに、上の段階に値があればそれを使い、なければ下の段階の値を使います。たとえば記事に「表示件数」が保存されていればそれを、なければカスタム設定の値を、カスタム設定も無ければ共通設定の値を使います。</p>
+
+<h3>項目ごとに、どの段階で設定できるか</h3>
+<table>
+    <thead><tr><th style="width:30%;">項目</th><th style="width:14%;">共通</th><th style="width:22%;">投稿タイプ別</th><th>記事ごと</th></tr></thead>
+    <tbody>
+        <tr><td>関連記事を表示する（ON/OFF）</td><td>—</td><td>「すべて有効化」でまとめて ON</td><td>○</td></tr>
+        <tr><td>関連記事に選ぶ範囲（投稿タイプ・カテゴリ）</td><td>○</td><td>○</td><td>○</td></tr>
+        <tr><td>表示件数・表示形式・挿入位置</td><td>○</td><td>○</td><td>○</td></tr>
+        <tr><td>カラーテーマ・見出し・見出しタグ</td><td>○</td><td>○</td><td>○</td></tr>
+        <tr><td>キャッシュ有効期限・AI分析用候補数追加・スライダー表示数</td><td>○</td><td>○</td><td>—</td></tr>
+        <tr><td>関連記事の選び方・モデル</td><td colspan="3">「🤖 AIのAPI設定」タブでサイト全体に 1 つ</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s2">設定を変えても記事に効かない理由</h2>
+
+<figure class="infographic">
+    <img src="images/infographics/ig-04-apply-settings.png" alt="設定を変えても効かない理由と直し方" class="lightbox-trigger">
+</figure>
+
+<p>「この記事で関連記事を表示する」が ON の記事を編集画面で保存すると、詳細設定を開いていなくても、関連記事の設定欄の値（そのときの初期値）が<strong>すべて記事に保存</strong>されます。記事ごとの設定はいちばん優先されるので、あとから共通設定やカスタム設定を変えても、保存済みの記事にはその変更が効きません。</p>
+
+<div class="callout callout-tip">
+    <div class="callout-title">よくある例</div>
+    <p>業種別の投稿タイプのカスタム設定で「関連記事に選ぶ範囲」を「業種別」だけにしたのに、一部の記事でブログの記事が出る。→ その記事の編集画面の「対象投稿タイプ」に、以前の「ブログ」が保存されています。カスタム設定の色を青にしたのにオレンジのまま、というのも同じ理由です。</p>
+</div>
+
+<h2 id="s3">変えた設定を既存の記事に効かせる</h2>
+
+<h3>投稿タイプの全記事をまとめて合わせる</h3>
+<div class="step">
+    <span class="step-number">1</span>
+    <div class="step-body"><p>「📋 投稿タイプ別設定」タブを開きます。</p></div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <div class="step-body"><p>その投稿タイプの行の赤いボタン <span class="btn-sample btn-red">すべて現在の設定値を反映</span> を押し、確認のダイアログで OK を選びます。</p></div>
+</div>
+<div class="step">
+    <span class="step-number">3</span>
+    <div class="step-body"><p>その投稿タイプの全記事で、記事ごとに保存された設定と関連記事のキャッシュが消え、今のカスタム設定（なければ共通設定）が効くようになります。「この記事で関連記事を表示する」の ON/OFF はそのままです。</p></div>
+</div>
+
+<figure class="screenshot">
+    <img src="images/screenshots/pt-03-tooltip-actions.png" alt="すべて現在の設定値を反映ボタン" class="lightbox-trigger">
+</figure>
+
+<p>記事の編集画面の詳細設定にある赤いボタン「「投稿タイプ名」をすべて現在のデフォルト値に戻す」も同じ操作です。</p>
+
+<h3>1 つの記事だけ合わせる</h3>
+<p>記事の編集画面で「詳細設定を開く」→「この記事を現在のデフォルト値に戻す」を押し、記事を保存します。</p>
+
+<div class="callout callout-warning">
+    <div class="callout-title">「すべて有効化」では直りません</div>
+    <p>緑の「すべて有効化」が変えるのは「この記事で関連記事を表示する」の ON/OFF だけです。記事に保存された範囲や色は変わりません。</p>
+</div>
+
+<div class="callout callout-note">
+    <div class="callout-title">記事を保存し直すと、また値が残ります</div>
+    <p>「すべて現在の設定値を反映」のあとに記事を編集画面で保存すると、その時点の値がまた記事に保存されます。値は今の設定と同じなので見た目は変わりませんが、あとで設定を変えたときは、もう一度「すべて現在の設定値を反映」を押してください。</p>
+</div>
+
+    <nav class="page-nav">
+        <a href="post-settings.html" class="prev">&laquo; 記事ごとの設定</a>
+        <a href="display.html" class="next">表示形式とカラーテーマ &raquo;</a>
+    </nav>
+
+    <footer class="manual-footer">
+        <p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p>
+        <p>プラグイン: Kashiwazaki SEO Related Posts v1.0.4</p>
+    </footer>
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>
